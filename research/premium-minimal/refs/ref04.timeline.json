@@ -1,0 +1,86 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 0.73,
+  "dur": 0.73,
+  "kind": "white+icon",
+  "words": "Discipline is"
+ },
+ {
+  "t0": 0.73,
+  "t1": 1.57,
+  "dur": 0.83,
+  "kind": "navy",
+  "words": "I"
+ },
+ {
+  "t0": 1.57,
+  "t1": 1.73,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 1.73,
+  "t1": 3.87,
+  "dur": 2.13,
+  "kind": "face",
+  "words": "will make myself do the thing"
+ },
+ {
+  "t0": 3.87,
+  "t1": 4.77,
+  "dur": 0.9,
+  "kind": "white+icon",
+  "words": "Motivation is"
+ },
+ {
+  "t0": 4.77,
+  "t1": 5.47,
+  "dur": 0.7,
+  "kind": "navy",
+  "words": "I"
+ },
+ {
+  "t0": 5.47,
+  "t1": 5.63,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 5.63,
+  "t1": 7.7,
+  "dur": 2.07,
+  "kind": "face",
+  "words": "want to do the thing and"
+ },
+ {
+  "t0": 7.7,
+  "t1": 8.47,
+  "dur": 0.77,
+  "kind": "white+icon",
+  "words": "the obsession is"
+ },
+ {
+  "t0": 8.47,
+  "t1": 9.2,
+  "dur": 0.73,
+  "kind": "navy",
+  "words": "I"
+ },
+ {
+  "t0": 9.2,
+  "t1": 9.37,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 9.37,
+  "t1": 11.47,
+  "dur": 2.1,
+  "kind": "face",
+  "words": "can't not do the thing"
+ }
+]

@@ -1,0 +1,65 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 0.7,
+  "dur": 0.7,
+  "kind": "white",
+  "words": "The reason that"
+ },
+ {
+  "t0": 0.7,
+  "t1": 1.47,
+  "dur": 0.77,
+  "kind": "white+icon",
+  "words": "obsession is so"
+ },
+ {
+  "t0": 1.47,
+  "t1": 2.13,
+  "dur": 0.67,
+  "kind": "navy",
+  "words": "powerful is"
+ },
+ {
+  "t0": 2.13,
+  "t1": 2.3,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 2.3,
+  "t1": 7.8,
+  "dur": 5.5,
+  "kind": "face",
+  "words": "simple. It's basically permanent, free motivation and discipline."
+ },
+ {
+  "t0": 7.8,
+  "t1": 9.17,
+  "dur": 1.37,
+  "kind": "white+icon",
+  "words": "You get output without"
+ },
+ {
+  "t0": 9.17,
+  "t1": 10.57,
+  "dur": 1.4,
+  "kind": "navy",
+  "words": "negotiation and"
+ },
+ {
+  "t0": 10.57,
+  "t1": 10.73,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 10.73,
+  "t1": 13.53,
+  "dur": 2.8,
+  "kind": "face",
+  "words": "you get action without having to tap into any willpower."
+ }
+]

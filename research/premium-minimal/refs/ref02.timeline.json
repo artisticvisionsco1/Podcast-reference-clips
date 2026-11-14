@@ -1,0 +1,100 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 1.07,
+  "dur": 1.07,
+  "kind": "white",
+  "words": "The smartest people wanna know"
+ },
+ {
+  "t0": 1.07,
+  "t1": 1.5,
+  "dur": 0.43,
+  "kind": "navy",
+  "words": "everything before"
+ },
+ {
+  "t0": 1.5,
+  "t1": 2.33,
+  "dur": 0.83,
+  "kind": "white",
+  "words": "they decide."
+ },
+ {
+  "t0": 2.33,
+  "t1": 2.37,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 2.37,
+  "t1": 3.77,
+  "dur": 1.4,
+  "kind": "face",
+  "words": "And if you wait till you know everything,"
+ },
+ {
+  "t0": 3.77,
+  "t1": 4.93,
+  "dur": 1.17,
+  "kind": "white",
+  "words": "the opportunity's gone."
+ },
+ {
+  "t0": 4.93,
+  "t1": 4.97,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 4.97,
+  "t1": 6.23,
+  "dur": 1.27,
+  "kind": "face",
+  "words": "And that's true not just in finance."
+ },
+ {
+  "t0": 6.23,
+  "t1": 7.33,
+  "dur": 1.1,
+  "kind": "white",
+  "words": "I think that's true in life."
+ },
+ {
+  "t0": 7.33,
+  "t1": 7.37,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 7.37,
+  "t1": 9.17,
+  "dur": 1.8,
+  "kind": "face",
+  "words": "We wait till we have absolute certainty."
+ },
+ {
+  "t0": 9.17,
+  "t1": 9.8,
+  "dur": 0.63,
+  "kind": "navy",
+  "words": "There's no absolute"
+ },
+ {
+  "t0": 9.8,
+  "t1": 10.4,
+  "dur": 0.6,
+  "kind": "white",
+  "words": "certainty in life."
+ },
+ {
+  "t0": 10.4,
+  "t1": 11.97,
+  "dur": 1.57,
+  "kind": "face",
+  "words": "The only absolute certainty is faith."
+ }
+]

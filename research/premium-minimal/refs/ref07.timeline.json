@@ -1,0 +1,93 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 0.6,
+  "dur": 0.6,
+  "kind": "navy",
+  "words": "Here's how you"
+ },
+ {
+  "t0": 0.6,
+  "t1": 1.37,
+  "dur": 0.77,
+  "kind": "white+icon",
+  "words": "have a great life."
+ },
+ {
+  "t0": 1.37,
+  "t1": 1.53,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 1.53,
+  "t1": 4.63,
+  "dur": 3.1,
+  "kind": "face",
+  "words": "It involves four things. The first three are shut"
+ },
+ {
+  "t0": 4.63,
+  "t1": 5.53,
+  "dur": 0.9,
+  "kind": "navy",
+  "words": "up."
+ },
+ {
+  "t0": 5.53,
+  "t1": 5.7,
+  "dur": 0.17,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 5.7,
+  "t1": 8.93,
+  "dur": 3.23,
+  "kind": "face",
+  "words": "That's the first one. Someone's always got it worse than you."
+ },
+ {
+  "t0": 8.93,
+  "t1": 9.77,
+  "dur": 0.83,
+  "kind": "navy",
+  "words": "Nobody wants to"
+ },
+ {
+  "t0": 9.77,
+  "t1": 10.47,
+  "dur": 0.7,
+  "kind": "white+icon",
+  "words": "hear you whine."
+ },
+ {
+  "t0": 10.47,
+  "t1": 11.4,
+  "dur": 0.93,
+  "kind": "navy",
+  "words": "Have gratitude for"
+ },
+ {
+  "t0": 11.4,
+  "t1": 12.17,
+  "dur": 0.77,
+  "kind": "white",
+  "words": "what you do have."
+ },
+ {
+  "t0": 12.17,
+  "t1": 12.33,
+  "dur": 0.17,
+  "kind": "face",
+  "words": "If"
+ },
+ {
+  "t0": 12.33,
+  "t1": 14.27,
+  "dur": 1.93,
+  "kind": "face",
+  "words": "you're alive, you got something to be grateful for."
+ }
+]

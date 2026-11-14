@@ -1,0 +1,135 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 1.07,
+  "dur": 1.07,
+  "kind": "face",
+  "words": "I'm unbeatable."
+ },
+ {
+  "t0": 1.07,
+  "t1": 1.6,
+  "dur": 0.53,
+  "kind": "white",
+  "words": "I can't be"
+ },
+ {
+  "t0": 1.6,
+  "t1": 2.13,
+  "dur": 0.53,
+  "kind": "navy",
+  "words": "beat. This"
+ },
+ {
+  "t0": 2.13,
+  "t1": 2.73,
+  "dur": 0.6,
+  "kind": "white",
+  "words": "is impossible."
+ },
+ {
+  "t0": 2.73,
+  "t1": 2.83,
+  "dur": 0.1,
+  "kind": "glitch/flash",
+  "words": ""
+ },
+ {
+  "t0": 2.83,
+  "t1": 2.87,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 2.87,
+  "t1": 3.8,
+  "dur": 0.93,
+  "kind": "face",
+  "words": "You can dent me."
+ },
+ {
+  "t0": 3.8,
+  "t1": 4.13,
+  "dur": 0.33,
+  "kind": "navy",
+  "words": "You can"
+ },
+ {
+  "t0": 4.13,
+  "t1": 4.73,
+  "dur": 0.6,
+  "kind": "white",
+  "words": "damage me."
+ },
+ {
+  "t0": 4.73,
+  "t1": 4.8,
+  "dur": 0.07,
+  "kind": "glitch/flash",
+  "words": ""
+ },
+ {
+  "t0": 4.8,
+  "t1": 4.83,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 4.83,
+  "t1": 6.5,
+  "dur": 1.67,
+  "kind": "face",
+  "words": "You're never ever gonna beat me."
+ },
+ {
+  "t0": 6.5,
+  "t1": 7.67,
+  "dur": 1.17,
+  "kind": "white",
+  "words": "I'm totally and"
+ },
+ {
+  "t0": 7.67,
+  "t1": 8.0,
+  "dur": 0.33,
+  "kind": "navy",
+  "words": "completely"
+ },
+ {
+  "t0": 8.0,
+  "t1": 8.83,
+  "dur": 0.83,
+  "kind": "white",
+  "words": "and"
+ },
+ {
+  "t0": 8.83,
+  "t1": 10.17,
+  "dur": 1.33,
+  "kind": "navy",
+  "words": "equivocably"
+ },
+ {
+  "t0": 10.17,
+  "t1": 10.23,
+  "dur": 0.07,
+  "kind": "glitch/flash",
+  "words": "unbeatable."
+ },
+ {
+  "t0": 10.23,
+  "t1": 10.27,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 10.27,
+  "t1": 12.1,
+  "dur": 1.83,
+  "kind": "face",
+  "words": ""
+ }
+]

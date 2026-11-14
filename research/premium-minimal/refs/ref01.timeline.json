@@ -1,0 +1,135 @@
+[
+ {
+  "t0": 0.0,
+  "t1": 0.47,
+  "dur": 0.47,
+  "kind": "white",
+  "words": "If I can't be"
+ },
+ {
+  "t0": 0.47,
+  "t1": 1.23,
+  "dur": 0.77,
+  "kind": "navy",
+  "words": "perfect,"
+ },
+ {
+  "t0": 1.23,
+  "t1": 1.27,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 1.27,
+  "t1": 1.37,
+  "dur": 0.1,
+  "kind": "glitch/flash",
+  "words": "it's"
+ },
+ {
+  "t0": 1.37,
+  "t1": 1.4,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 1.4,
+  "t1": 2.47,
+  "dur": 1.07,
+  "kind": "face",
+  "words": "not even worth trying."
+ },
+ {
+  "t0": 2.47,
+  "t1": 3.27,
+  "dur": 0.8,
+  "kind": "face",
+  "words": "Combined with"
+ },
+ {
+  "t0": 3.27,
+  "t1": 5.1,
+  "dur": 1.83,
+  "kind": "white",
+  "words": "the pretentiousness of, I totally could"
+ },
+ {
+  "t0": 5.1,
+  "t1": 5.53,
+  "dur": 0.43,
+  "kind": "navy",
+  "words": "do it."
+ },
+ {
+  "t0": 5.53,
+  "t1": 5.57,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 5.57,
+  "t1": 5.67,
+  "dur": 0.1,
+  "kind": "glitch/flash",
+  "words": "It's"
+ },
+ {
+  "t0": 5.67,
+  "t1": 5.7,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 5.7,
+  "t1": 7.43,
+  "dur": 1.73,
+  "kind": "face",
+  "words": "easy to tell yourself, I just don't want to do it"
+ },
+ {
+  "t0": 7.43,
+  "t1": 7.9,
+  "dur": 0.47,
+  "kind": "navy",
+  "words": "because it's"
+ },
+ {
+  "t0": 7.9,
+  "t1": 8.9,
+  "dur": 1.0,
+  "kind": "white",
+  "words": "just a preference thing"
+ },
+ {
+  "t0": 8.9,
+  "t1": 8.93,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 8.93,
+  "t1": 9.03,
+  "dur": 0.1,
+  "kind": "glitch/flash",
+  "words": "for"
+ },
+ {
+  "t0": 9.03,
+  "t1": 9.07,
+  "dur": 0.03,
+  "kind": "face",
+  "words": ""
+ },
+ {
+  "t0": 9.07,
+  "t1": 10.13,
+  "dur": 1.07,
+  "kind": "face",
+  "words": "me. I don't really want to."
+ }
+]
