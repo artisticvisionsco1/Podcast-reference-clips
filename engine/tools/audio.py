@@ -1,56 +1,68 @@
-"""Mix voice + warm ambient pad + transition whooshes, mux with the silent render.
-Usage: audio.py <name>   (reads videos/<name>/audio.wav, videos/<name>/scene.js, out/<name>.silent.mp4)
+"""Final audio: cleaned voice + real SFX (Mixkit, assets/sfx) placed on scene events + ducked music bed.
+Usage: audio.py <name> [music.mp3]
+Reads videos/<name>/audio.wav, out/<name>.events.json (written by render.mjs), out/<name>.silent.mp4.
 Writes renders/<name>.mp4
 """
-import sys, re, subprocess, numpy as np, wave, os
+import sys, os, json, subprocess, numpy as np, wave
 name = sys.argv[1]
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V = f"{root}/videos/{name}"; SR = 48000
-src = open(f"{V}/scene.js").read()
-dur = float(re.search(r"duration:\s*([\d.]+)", src).group(1))
-trans = [(float(m.group(1)), m.group(2)) for m in re.finditer(r"t0:\s*([\d.]+)[^\n]*?in:\s*\{\s*type:\s*'(\w+)'", src)]
-N = int(dur * SR); t = np.arange(N) / SR
-rng = np.random.default_rng(7)
+music = sys.argv[2] if len(sys.argv) > 2 else f"{root}/assets/music/vastness.mp3"
+SR = 48000
+ev = json.load(open(f"{root}/out/{name}.events.json"))
+dur = ev["duration"]; N = int(dur * SR) + SR
 
-# warm pad: low chord (A1 E2 A2 C#3 E3) with slow swells, soft saturation, lowpassed by averaging
-pad = np.zeros(N)
-for f, a in [(55, .5), (82.4, .35), (110, .3), (138.6, .16), (164.8, .14), (220, .06)]:
-    pad += a * np.sin(2 * np.pi * f * t + rng.random() * 6) * (0.75 + 0.25 * np.sin(2 * np.pi * t / (7 + f % 5) + rng.random() * 6))
-pad = np.tanh(pad * .8)
-k = np.ones(64) / 64; pad = np.convolve(pad, k, mode="same")
-pad *= np.minimum(1, t / 1.5) * np.minimum(1, (dur - t) / 1.0)
+def load(path):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True).stdout
+    return np.frombuffer(raw, np.float32).copy()
+cache = {}
+def sfx(n):
+    if n not in cache:
+        x = load(f"{root}/assets/sfx/{n}.mp3"); x /= (np.abs(x).max() + 1e-9)
+        env = np.convolve(np.abs(x), np.ones(480) / 480, mode="same")
+        cache[n] = (x, int(np.argmax(env)))
+    return cache[n]
 
-def bandnoise(n, lo, hi):
-    x = rng.standard_normal(n); X = np.fft.rfft(x); fr = np.fft.rfftfreq(n, 1 / SR)
-    X[(fr < lo) | (fr > hi)] = 0; return np.fft.irfft(X, n)
+track = np.zeros(N)
+def place(n, t, gain, align="peak", maxlen=None, fade=.08):
+    x, pk = sfx(n)
+    if maxlen: x = x[:int(maxlen * SR)].copy(); f = int(fade * SR); x[-f:] *= np.linspace(1, 0, f)
+    off = pk if align == "peak" else 0
+    s = int(t * SR) - off
+    a, b = max(0, s), min(N, s + len(x))
+    if b > a: track[a:b] += x[a - s:b - s] * gain
 
-fx = np.zeros(N)
-for t0, kind in trans:
-    L = {"whip": .55, "amber": .7, "blur": .3, "slide": .45}.get(kind, .4); n = int(L * SR)
-    s = int(max(0, t0 - L * .55) * SR)
-    w = bandnoise(n, 300, 6000) if kind != "blur" else bandnoise(n, 1500, 9000)
-    env = np.sin(np.linspace(0, np.pi, n)) ** (2 if kind == "whip" else 3)
-    # pitch-rise feel: emphasise highs toward the cut
-    w = w * env * (np.linspace(.4, 1, n))
-    gain = {"whip": .5, "amber": .3, "blur": .12, "slide": .3}.get(kind, .3)
-    e = min(N, s + n); fx[s:e] += (w[:e - s] / (np.abs(w).max() + 1e-9)) * gain
-    if kind == "whip":  # low thump on the cut
-        m = int(.25 * SR); tt = np.arange(m) / SR
-        th = np.sin(2 * np.pi * (70 - 30 * tt / .25) * tt) * np.exp(-tt * 18) * .5
-        c = int(t0 * SR); e = min(N, c + m); fx[c:e] += th[:e - c]
+# hook hit at the very start
+place("whoosh_deep_impact", 0.02, .28, align="start", maxlen=1.6)
+for tr in ev["transitions"]:
+    t, ty = tr["t"], tr["type"]
+    if ty == "whip": place("whoosh_cine_fast", t + .05, .5)
+    elif ty == "amber": place("air_zoom", t + .18, .4)
+    elif ty == "blur": place("sweep_small", t + .04, .18)
+    elif ty == "slide": place("swoosh_fast", t + .1, .35)
+for sh in ev["shots"]:
+    for ct in sh["cards"]: place("swoosh_fast", ct + .2, .4)
+for r in ev["runs"]:
+    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .3)
+    elif r["k"] == "hl": place("typing_soft", r["t"], .35, align="start", maxlen=.5)
+    elif r["k"] == "sc": place("sparkle", r["t"] + .05, .08, maxlen=.9)
+for e in ev.get("sfx", []): place(e["n"], e["t"], e.get("g", .4), e.get("align", "peak"), e.get("max"))
 
 def wav(path, x):
-    x = np.clip(x, -1, 1); y = (x * 32767).astype(np.int16)
+    y = (np.clip(x, -1, 1) * 32767).astype(np.int16)
     with wave.open(path, "w") as w: w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(y.tobytes())
-tmp = f"{root}/out/{name}"
-wav(f"{tmp}.pad.wav", pad * .9); wav(f"{tmp}.fx.wav", fx)
+fxp = f"{root}/out/{name}.sfx.wav"; wav(fxp, track * .9)
 os.makedirs(f"{root}/renders", exist_ok=True)
 out = f"{root}/renders/{name}.mp4"
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{root}/out/{name}.silent.mp4", "-i", f"{V}/audio.wav", "-i", f"{tmp}.pad.wav", "-i", f"{tmp}.fx.wav",
-  "-filter_complex",
-  "[1:a]highpass=f=70,acompressor=threshold=-20dB:ratio=3:attack=5:release=80,loudnorm=I=-14:TP=-1.5:LRA=9,asplit=2[v][vs];"
-  "[2:a]volume=0.09[p];[3:a]volume=0.55[f];"
-  "[p][vs]sidechaincompress=threshold=0.05:ratio=6:attack=20:release=300[pd];"
-  "[v][pd][f]amix=inputs=3:normalize=0,alimiter=limit=0.95[a]",
-  "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest", out], check=True)
-print("wrote", out, "transitions:", trans)
+voice = ("[1:a]aformat=channel_layouts=mono,highpass=f=75,"
+         "equalizer=f=220:t=q:w=1.1:g=-2.5,equalizer=f=3200:t=q:w=1.0:g=2.5,equalizer=f=9000:t=h:w=1:g=1.5,"
+         "deesser=i=.3,acompressor=threshold=-21dB:ratio=2.5:attack=8:release=120:makeup=2,"
+         "loudnorm=I=-14:TP=-1.5:LRA=7,aformat=channel_layouts=stereo,asplit=2[v][vs];")
+mus = (f"[2:a]atrim=0:{dur + .5},aformat=channel_layouts=stereo,highpass=f=90,lowpass=f=9000,"
+       f"loudnorm=I=-24:TP=-6,afade=t=in:d=1.2,afade=t=out:st={max(0, dur - 1.5)}:d=1.5[m0];"
+       "[m0][vs]sidechaincompress=threshold=0.03:ratio=5:attack=30:release=400[m];")
+fx = "[3:a]aformat=channel_layouts=stereo,volume=1.0[f];"
+mix = "[v][m][f]amix=inputs=3:normalize=0:duration=first,alimiter=limit=0.93:level=false[a]"
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{root}/out/{name}.silent.mp4", "-i", f"{root}/videos/{name}/audio.wav",
+                "-i", music, "-i", fxp, "-filter_complex", voice + mus + fx + mix,
+                "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-ar", "48000", "-shortest", out], check=True)
+print("wrote", out)

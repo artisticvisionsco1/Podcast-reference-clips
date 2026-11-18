@@ -55,7 +55,7 @@ export function trophyScene({ env }) {
   const rim2 = new THREE.PointLight(0xffa040, 7, 10); rim2.position.set(2.5, 1, -2); scene.add(rim2);
   const halo = glowSprite(5, 'rgba(255,140,30,.25)'); halo.position.set(0, 1.4, -1.5); scene.add(halo);
   const d = dust(scene);
-  return { scene, camera, bloom: { strength: .45, radius: .5, threshold: .85 }, update(t) {
+  return { scene, camera, hero: tro, bloom: { strength: .45, radius: .5, threshold: .85 }, update(t) {
     tro.rotation.y = -.6 + t * .45; tro.position.y = 1.0 + Math.sin(t * 1.6) * .06;
     camera.position.z = 10.5 - t * .3; camera.lookAt(camera.userData.look); d(t);
   } };
@@ -224,7 +224,7 @@ export function brainScene({ env, glowFade = [1, 1] }) {
   const under = new THREE.PointLight(0xff5a10, 8, 8); under.position.set(0, -2.5, 1.5); scene.add(under);
   const halo = glowSprite(6, 'rgba(255,130,30,.22)'); halo.position.set(0, 0, -2); scene.add(halo);
   const d = dust(scene, 220, [7, 9, 6], [0, 0, 1]);
-  return { scene, camera, brain, lines, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
+  return { scene, camera, brain, lines, hero: brain, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
     brain.rotation.y = -1.25 + t * .25; lines.rotation.y = brain.rotation.y;
     brain.position.y = Math.sin(t * 1.3) * .04;
     lines.material.opacity = Math.min(.55, t * .5) * (.75 + .25 * Math.sin(t * 6));
@@ -251,7 +251,7 @@ export function coinFlipScene({ env }) {
   const rim = new THREE.PointLight(AMBER, 20, 12); rim.position.set(-3, 2.5, -2.5); scene.add(rim);
   const halo = glowSprite(5, 'rgba(255,140,30,.22)'); halo.position.set(0, 1.6, -1.5); scene.add(halo);
   const d = dust(scene);
-  return { scene, camera, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
+  return { scene, camera, hero: coin, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
     coin.rotation.x = t * 9.5; coin.rotation.y = .5; coin.position.y = 1.6 + Math.sin(Math.min(t, 2.2) / 2.2 * Math.PI) * .5;
     camera.position.z = 7.5 - t * .3; camera.lookAt(camera.userData.look); d(t);
   } };

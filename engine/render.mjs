@@ -20,6 +20,8 @@ await page.waitForFunction(() => window.READY || window.ERR, null, { timeout: 12
 const err = await page.evaluate(() => window.ERR); if (err) { console.error(err); process.exit(1); }
 const dur = await page.evaluate(() => window.SCENE_INFO.duration);
 fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'out', `${name}.events.json`), JSON.stringify(await page.evaluate(() => window.SCENE_EVENTS), null, 1));
+fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });
 const grab = async t => { await page.evaluate(t => window.renderFrame(t), t); return Buffer.from((await page.evaluate(() => window.grab())).split(',')[1], 'base64'); };
 if (flags.includes('--stills')) {
   const ts = (opt('--stills') && !opt('--stills').startsWith('--') ? opt('--stills').split(',').map(Number) : Array.from({ length: 12 }, (_, i) => +(dur * (i + .5) / 12).toFixed(2)));

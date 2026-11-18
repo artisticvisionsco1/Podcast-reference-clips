@@ -4,3 +4,6 @@ sources/
 videos/*/frames/
 videos/*/src.mp4
 videos/*/audio.wav
+assets/sfx/
+assets/music/
+assets/img/

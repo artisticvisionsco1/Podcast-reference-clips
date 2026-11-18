@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { drawLockup } from '/web/lockup.js';
 
 export const W = 1080, H = 1920, FPS = 30;
 export const C = { bg0: '#0b0703', bg1: '#2e1c07', amber: '#ff9a1f', glow: '#ff6a00', white: '#fff6ea' };
@@ -49,6 +50,14 @@ function render3d(shot, lt, ctx) {
   if (!built.has(shot)) built.set(shot, shot.build({ THREE, env: envTex }));
   const b = built.get(shot);
   b.update(lt);
+  const en = shot.enter ?? 'rise';
+  if (b.hero && en) {
+    const k = clamp(lt / (shot.enterDur ?? .7)), kb = ease.back(k), ko = ease.out(k);
+    const sc0 = b.hero.userData.s0 ?? (b.hero.userData.s0 = b.hero.scale.x);
+    b.hero.scale.setScalar(sc0 * lerp(.3, 1, kb));
+    if (en === 'rise') { b.hero.position.y += (1 - ko) * -1.6; b.hero.rotation.y += (1 - ko) * 2.4; }
+    if (en === 'side') { b.hero.position.x += (1 - ko) * 3.2; b.hero.rotation.z += (1 - ko) * -.6; }
+  }
   renderPass.scene = b.scene; renderPass.camera = b.camera;
   const bl = b.bloom || {}; bloom.strength = bl.strength ?? .9; bloom.radius = bl.radius ?? .55; bloom.threshold = bl.threshold ?? .72;
   composer.render();
@@ -71,10 +80,64 @@ async function renderFace(V, shot, lt, ctx) {
   const n = Math.max(1, Math.round(srcT * FPS) + 1);
   const img = await loadImg(`/videos/${V}/frames/${String(n).padStart(5, '0')}.jpg`);
   let s = lerp(shot.zoom?.from ?? 1, shot.zoom?.to ?? 1.06, ease.inOut(lt / (shot.t1 - shot.t0)));
-  for (const p of shot.punch || []) if (lt >= p.t) s *= p.s;
+  for (const p of shot.punch || []) if (lt >= p.t) { const pk = ease.out(clamp((lt - p.t) / .12)); s *= lerp(1, p.s, pk); }
   const fx = shot.focus?.x ?? .5, fy = shot.focus?.y ?? .4;
   ctx.save(); ctx.translate(W * fx, H * fy); ctx.scale(s, s); ctx.translate(-W * fx, -H * fy);
   ctx.drawImage(img, 0, 0, W, H); ctx.restore();
+  lightLeak(ctx, srcT, shot.leak ?? -1);
+}
+
+function lightLeak(ctx, t, side = -1) {
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  const x = W * (side < 0 ? .08 : .92) + Math.sin(t * .4) * 60, y = H * (.22 + .04 * Math.sin(t * .3));
+  const g = ctx.createRadialGradient(x, y, 0, x, y, H * .42);
+  g.addColorStop(0, 'rgba(255,140,40,.34)'); g.addColorStop(.5, 'rgba(255,90,10,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgba(255,240,225,1)'; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+// b-roll frames: videos/<v>/broll/<dir>/00001.jpg (30 fps)
+async function brollImg(dir, lt, speed = 1, n0 = 1) {
+  const list = brollCount[dir]; const n = Math.min(list ?? 9999, n0 + Math.floor(lt * FPS * speed));
+  try { return await loadImg(`/videos/${V}/broll/${dir}/${String(Math.max(1, n)).padStart(5, '0')}.jpg`); }
+  catch { brollCount[dir] = n - 1; return loadImg(`/videos/${V}/broll/${dir}/${String(Math.max(1, n - 1)).padStart(5, '0')}.jpg`); }
+}
+const brollCount = {};
+function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// stack of rounded b-roll cards sliding in from alternating sides (reference: Scrolling / Working / Learning)
+async function renderStack(ctx, shot, lt) {
+  warmBg(ctx, .5, .5, 1.1);
+  const cw = 800, ch = 450, gap = 70, n = shot.cards.length, y0 = H * (shot.cy ?? .44) - (n * ch + (n - 1) * gap) / 2;
+  for (let i = 0; i < n; i++) {
+    const c = shot.cards[i]; const k = clamp((lt - c.at) / .42); if (k <= 0) continue;
+    const side = i % 2 ? 1 : -1, e = ease.back(k);
+    const x = W / 2 - cw / 2 + side * (1 - e) * (W * .9) + Math.sin(lt * .8 + i) * 6, y = y0 + i * (ch + gap);
+    const img = await brollImg(c.dir, Math.max(0, lt - c.at), c.speed ?? 1);
+    ctx.save(); ctx.globalAlpha = clamp(k * 2.5);
+    ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14; rrect(ctx, x, y, cw, ch, 34); ctx.fillStyle = '#000'; ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.save(); rrect(ctx, x, y, cw, ch, 34); ctx.clip(); ctx.drawImage(img, x - 20, y - 11, cw + 40, ch + 22);
+    const g = ctx.createLinearGradient(0, y, 0, y + ch); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)'); ctx.fillStyle = g; ctx.fillRect(x, y, cw, ch); ctx.restore();
+    rrect(ctx, x, y, cw, ch, 34); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,220,180,.55)'; ctx.stroke();
+    ctx.font = '700 92px Pop'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 24; ctx.fillText(c.label, x + cw / 2, y + ch / 2 + 32);
+    ctx.restore();
+  }
+}
+// full-screen b-roll clip with slow push
+async function renderClip(ctx, shot, lt) {
+  const img = await brollImg(shot.dir, lt, shot.speed ?? 1);
+  const s = lerp(shot.zoom?.from ?? 1.04, shot.zoom?.to ?? 1.14, ease.inOut(lt / (shot.t1 - shot.t0)));
+  ctx.save(); ctx.translate(W / 2, H * .45); ctx.scale(s, s); ctx.translate(-W / 2, -H * .45); ctx.drawImage(img, 0, 0, W, H); ctx.restore();
+}
+// rotating outline frames + $ style ornaments over 3D/2D cards (reference: "than your bank account")
+function frames2d(ctx, lt, f) {
+  ctx.save(); ctx.translate(W / 2, H * (f.cy ?? .42));
+  for (let i = 0; i < 2; i++) {
+    const k = ease.out(clamp((lt - .05 - i * .12) / .6)); const sz = (f.size ?? 620) * (i ? .92 : 1);
+    ctx.save(); ctx.rotate((i ? .3 : -.16) + (1 - k) * (i ? .9 : -.9) + lt * (i ? -.06 : .05)); ctx.scale(.6 + .4 * k, .6 + .4 * k);
+    ctx.globalAlpha = .6 * k; ctx.strokeStyle = '#f0c08a'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(255,140,40,.8)'; ctx.shadowBlur = 16;
+    ctx.strokeRect(-sz / 2, -sz / 2, sz, sz); ctx.restore();
+  }
+  ctx.restore();
 }
 
 // ---------- 2D backgrounds ----------
@@ -94,64 +157,6 @@ function grain(ctx, t) {
   ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.drawImage(grainC[Math.floor(t * FPS) % 6], 0, 0, W, H); ctx.restore();
 }
 
-// ---------- text lockups ----------
-// lockup: {t0, t1, y, lines:[[{w, k:'s'|'sc'|'b'|'hl', at, c?}]], scale?}
-// k: s = small sans, sc = orange script with glow, scw = white script, b = bold white, hl = bold in orange box (typed)
-const FONT = { s: [600, 54, 'Sans'], sc: [400, 170, 'Script'], scw: [400, 130, 'Script'], b: [800, 96, 'Sans'], hl: [800, 120, 'Sans'] };
-function fontOf(k, sc) { const [w, px, f] = FONT[k]; return `${w} ${Math.round(px * sc)}px ${f}`; }
-function drawLockup(ctx, L, t) {
-  if (t < L.t0 || t > L.t1 + .25) return;
-  const sc = L.scale ?? 1, outA = 1 - ease.in(prog(t, L.t1, .22));
-  const gap = 18 * sc; let y = H * (L.y ?? .6);
-  const rows = L.lines.map(line => {
-    const items = line.map(r => { ctx.font = fontOf(r.k, sc); const m = ctx.measureText(r.w); return { ...r, wd: m.width, h: FONT[r.k][1] * sc }; });
-    const wd = items.reduce((a, r) => a + r.wd, 0) + gap * (items.length - 1);
-    return { items, wd, h: Math.max(...items.map(r => r.h)) };
-  });
-  const total = rows.reduce((a, r) => a + r.h * 1.0 + 8 * sc, 0); y -= total / 2;
-  for (const row of rows) {
-    let x = W / 2 - row.wd / 2; const base = y + row.h * .78;
-    for (const r of row.items) {
-      const k = prog(t, r.at, r.k === 'hl' ? .5 : (r.k === 'sc' || r.k === 'scw') ? .3 : .13);
-      if (k > 0) drawRun(ctx, r, x, base, k, t, sc, outA);
-      x += r.wd + gap;
-    }
-    y += row.h * 1.0 + 8 * sc;
-  }
-}
-function drawRun(ctx, r, x, base, k, t, sc, outA) {
-  ctx.save(); ctx.font = fontOf(r.k, sc); ctx.textBaseline = 'alphabetic';
-  if (r.k === 's') {
-    ctx.globalAlpha = ease.out(k) * outA; ctx.fillStyle = C.white;
-    ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = 16;
-    ctx.fillText(r.w, x, base + 10 * (1 - ease.out(k)));
-  } else if (r.k === 'b') {
-    const s = lerp(1.12, 1, ease.out(k)); ctx.globalAlpha = ease.out(k) * outA;
-    ctx.translate(x + r.wd / 2, base); ctx.scale(s, s);
-    ctx.fillStyle = C.white; ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 18; ctx.fillText(r.w, -r.wd / 2, 0);
-    ctx.shadowColor = 'rgba(255,200,140,.45)'; ctx.shadowBlur = 30; ctx.fillText(r.w, -r.wd / 2, 0);
-  } else if (r.k === 'sc' || r.k === 'scw') {
-    // write-on: soft-edged wipe left->right
-    const e = ease.out(k), h = r.h * 1.4;
-    ctx.beginPath(); ctx.rect(x - 40, base - h, (r.wd + 80) * e, h * 1.6); ctx.clip();
-    ctx.globalAlpha = outA * (.3 + .7 * e);
-    const col = r.k === 'sc' ? C.amber : C.white;
-    if (r.k === 'sc') { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillText(r.w, x + 3, base + 5); ctx.shadowColor = C.glow; ctx.shadowBlur = 34; }
-    else { ctx.shadowColor = 'rgba(255,220,180,.55)'; ctx.shadowBlur = 24; }
-    ctx.fillStyle = col; ctx.fillText(r.w, x, base);
-    ctx.shadowBlur = 0; ctx.fillStyle = r.k === 'sc' ? '#ffd9a0' : '#fff'; ctx.globalAlpha *= .55; ctx.fillText(r.w, x, base);
-  } else if (r.k === 'hl') {
-    const pad = 22 * sc, bh = r.h * 1.0, bx = x - pad, by = base - bh * .82;
-    const boxK = ease.out(prog(k, 0, .25));
-    ctx.globalAlpha = outA; ctx.shadowColor = C.glow; ctx.shadowBlur = 70;
-    ctx.fillStyle = C.amber; ctx.fillRect(bx, by, (r.wd + pad * 2) * boxK, bh * 1.08);
-    ctx.shadowBlur = 0;
-    const n = Math.floor(r.w.length * clamp((k - .15) / .85));
-    ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(120,40,0,.5)'; ctx.shadowBlur = 10; ctx.fillText(r.w.slice(0, n), x, base);
-  }
-  ctx.restore();
-}
-
 // ---------- frame composition ----------
 let V, SC;
 async function drawShot(ctx, shot, t) {
@@ -160,6 +165,9 @@ async function drawShot(ctx, shot, t) {
   if (shot.kind === 'face') await renderFace(V, shot, lt, ctx);
   else if (shot.kind === '3d') render3d(shot, lt, ctx);
   else if (shot.kind === '2d') shot.draw(ctx, lt, { W, H, C, ease, prog, clamp, lerp, warmBg });
+  else if (shot.kind === 'stack') await renderStack(ctx, shot, lt);
+  else if (shot.kind === 'clip') await renderClip(ctx, shot, lt);
+  if (shot.frames) frames2d(ctx, lt, shot.frames);
   if (shot.overlay) shot.overlay(ctx, lt, { W, H, C, ease, prog, clamp, lerp });
   ctx.restore();
 }
@@ -199,17 +207,21 @@ export async function frame(t) {
     }
   }
   octx.globalAlpha = 1; octx.filter = 'none'; octx.drawImage(img, 0, 0);
-  for (const L of SC.lockups || []) drawLockup(octx, L, t);
+  for (const L of SC.lockups || []) drawLockup(octx, L, t, W, H);
   vignette(octx, SC.vignette ?? .5); grain(octx, t);
 }
 
 export async function boot(name) {
   V = name;
-  await document.fonts.load('400 60px Script'); await document.fonts.load('800 60px Sans'); await document.fonts.load('400 40px Sans'); await document.fonts.load('600 40px Sans');
+  await Promise.all(['400 60px Script','400 60px Brush','400 60px Brush2','400 60px Fancy','500 60px Pop','600 60px Pop','700 60px Pop','800 60px Pop'].map(f => document.fonts.load(f))); await document.fonts.load('800 60px Sans'); await document.fonts.load('400 40px Sans'); await document.fonts.load('600 40px Sans');
   initThree();
   const mod = await import(`/videos/${name}/scene.js`);
   SC = await mod.default({ THREE, W, H, C, ease, prog, clamp, lerp, warmBg });
   window.SCENE_INFO = { duration: SC.duration };
+  window.SCENE_EVENTS = { duration: SC.duration,
+    transitions: SC.shots.filter(x => x.in).map(x => ({ t: x.t0, type: x.in.type })),
+    shots: SC.shots.map(x => ({ t: x.t0, kind: x.kind, cards: (x.cards || []).map(c => x.t0 + c.at) })),
+    runs: (SC.lockups || []).flatMap(L => L.lines.flat().map(r => ({ t: r.at, k: r.k, w: r.w }))), sfx: SC.sfx || [] };
   window.renderFrame = async t => { await frame(t); };
   window.grab = () => out.toDataURL('image/jpeg', 0.93);
 }
