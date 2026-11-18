@@ -12,9 +12,9 @@ os.makedirs(f"{out}/frames", exist_ok=True)
 dur = t1 - t0
 
 # warm cinematic grade (this account's look): lift warmth, deepen blacks, gentle contrast
-GRADE = ("eq=contrast=1.2:saturation=1.22:gamma=.95,"
-         "colorbalance=rs=.04:gs=0:bs=-.05:rm=.07:gm=.01:bm=-.08:rh=.05:gh=.02:bh=-.06,"
-         "curves=all='0/0 0.1/0.04 0.5/0.5 0.85/0.9 1/1'")
+GRADE = ("eq=contrast=1.12:saturation=.98:gamma=1.06,"
+         "colorbalance=rs=-.07:gs=-.01:bs=.09:rm=.05:gm=-.01:bm=-.03:rh=.06:gh=.02:bh=-.04,"
+         "curves=all='0/0.015 0.5/0.52 1/1'")
 
 def frames(vf, w, h):
     p = subprocess.Popen(["ffmpeg", "-v", "error", "-ss", str(t0), "-t", str(dur), "-i", src, "-vf", f"fps={FPS},{vf}",
@@ -58,7 +58,7 @@ for i, f in enumerate(frames(GRADE, SW, SH)):
     up = cv2.resize(crop, (1080, 1920), interpolation=cv2.INTER_LANCZOS4)
     # mild unsharp to recover upscale softness
     blur = cv2.GaussianBlur(up, (0, 0), 2.0)
-    up = cv2.addWeighted(up, 1.6, blur, -.6, 0)
+    up = cv2.addWeighted(up, 1.45, blur, -.45, 0)
     cv2.imwrite(f"{out}/frames/{i + 1:05d}.jpg", up, [cv2.IMWRITE_JPEG_QUALITY, 92])
 
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t0), "-t", str(dur), "-i", src, "-vn", "-ac", "2", "-ar", "48000", f"{out}/audio.wav"], check=True)

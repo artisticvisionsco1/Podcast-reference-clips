@@ -20,6 +20,10 @@ This account is **completely separate** from the other two channels:
 - Length: TBD
 - Post caption format: TBD
 
+## Content rules (owner)
+- **Never show women anywhere: not in b-roll, cut-aways, thumbnails or assets** (owner, 2026-11-18). Check every b-roll clip frame-by-frame before using it; skip any shot with a woman in it, even a partial one such as hands.
+- Credit the original podcast in the post caption.
+
 ## Layout
 - `research/`: reference account studies and transcripts.
 - `videos/<name>/`: per-video work (script, voice, timings, scene).

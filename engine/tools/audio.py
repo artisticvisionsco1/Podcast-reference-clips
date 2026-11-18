@@ -32,19 +32,18 @@ def place(n, t, gain, align="peak", maxlen=None, fade=.08):
     if b > a: track[a:b] += x[a - s:b - s] * gain
 
 # hook hit at the very start
-place("whoosh_deep_impact", 0.02, .28, align="start", maxlen=1.6)
+place("whoosh_deep_impact", 0.02, .3, align="start", maxlen=1.8)
 for tr in ev["transitions"]:
     t, ty = tr["t"], tr["type"]
-    if ty == "whip": place("whoosh_cine_fast", t + .05, .5)
-    elif ty == "amber": place("air_zoom", t + .18, .4)
-    elif ty == "blur": place("sweep_small", t + .04, .18)
-    elif ty == "slide": place("swoosh_fast", t + .1, .35)
+    if ty == "whip": place("whoosh_cine_fast", t + .14, .8); place("air_woosh", t + .1, .35)
+    elif ty == "amber": place("whoosh_tunnel", t + .2, .6, maxlen=1.6)
+    elif ty in ("zoomin", "blur"): place("swoosh_wind_short", t + .08, .4)
+    elif ty == "slide": place("swoosh_fast", t + .1, .5)
 for sh in ev["shots"]:
-    for ct in sh["cards"]: place("swoosh_fast", ct + .2, .4)
+    for ct in sh["cards"]: place("swoosh_fast", ct + .18, .55)
 for r in ev["runs"]:
-    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .3)
-    elif r["k"] == "hl": place("typing_soft", r["t"], .35, align="start", maxlen=.5)
-    elif r["k"] == "sc": place("sparkle", r["t"] + .05, .08, maxlen=.9)
+    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .32)
+    elif r["k"] == "hl": place("typing_soft", r["t"], .45, align="start", maxlen=.55)
 for e in ev.get("sfx", []): place(e["n"], e["t"], e.get("g", .4), e.get("align", "peak"), e.get("max"))
 
 def wav(path, x):

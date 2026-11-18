@@ -91,9 +91,11 @@ function lightLeak(ctx, t, side = -1) {
   ctx.save(); ctx.globalCompositeOperation = 'screen';
   const x = W * (side < 0 ? .08 : .92) + Math.sin(t * .4) * 60, y = H * (.22 + .04 * Math.sin(t * .3));
   const g = ctx.createRadialGradient(x, y, 0, x, y, H * .42);
-  g.addColorStop(0, 'rgba(255,140,40,.34)'); g.addColorStop(.5, 'rgba(255,90,10,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  g.addColorStop(0, 'rgba(255,150,50,.42)'); g.addColorStop(.45, 'rgba(255,100,20,.16)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgba(255,240,225,1)'; ctx.fillRect(0, 0, W, H);
+  const x2 = W * (side < 0 ? .95 : .05), y2 = H * (.08 + .03 * Math.sin(t * .5 + 1));
+  const g2 = ctx.createRadialGradient(x2, y2, 0, x2, y2, H * .28);
+  g2.addColorStop(0, 'rgba(255,120,30,.22)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 // b-roll frames: videos/<v>/broll/<dir>/00001.jpg (30 fps)
@@ -107,18 +109,18 @@ function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.
 // stack of rounded b-roll cards sliding in from alternating sides (reference: Scrolling / Working / Learning)
 async function renderStack(ctx, shot, lt) {
   warmBg(ctx, .5, .5, 1.1);
-  const cw = 800, ch = 450, gap = 70, n = shot.cards.length, y0 = H * (shot.cy ?? .44) - (n * ch + (n - 1) * gap) / 2;
+  const cw = shot.cw ?? 800, ch = shot.ch ?? 450, gap = 70, n = shot.cards.length, y0 = H * (shot.cy ?? .44) - (n * ch + (n - 1) * gap) / 2;
   for (let i = 0; i < n; i++) {
     const c = shot.cards[i]; const k = clamp((lt - c.at) / .42); if (k <= 0) continue;
     const side = i % 2 ? 1 : -1, e = ease.back(k);
-    const x = W / 2 - cw / 2 + side * (1 - e) * (W * .9) + Math.sin(lt * .8 + i) * 6, y = y0 + i * (ch + gap);
+    const x = W / 2 - cw / 2 + side * (1 - e) * (W * .9) + Math.sin(lt * .8 + i) * 6, y = y0 + i * (ch + gap) - lt * 10;
     const img = await brollImg(c.dir, Math.max(0, lt - c.at), c.speed ?? 1);
     ctx.save(); ctx.globalAlpha = clamp(k * 2.5);
     ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14; rrect(ctx, x, y, cw, ch, 34); ctx.fillStyle = '#000'; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.save(); rrect(ctx, x, y, cw, ch, 34); ctx.clip(); ctx.drawImage(img, x - 20, y - 11, cw + 40, ch + 22);
     const g = ctx.createLinearGradient(0, y, 0, y + ch); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)'); ctx.fillStyle = g; ctx.fillRect(x, y, cw, ch); ctx.restore();
     rrect(ctx, x, y, cw, ch, 34); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,220,180,.55)'; ctx.stroke();
-    ctx.font = '700 92px Pop'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 24; ctx.fillText(c.label, x + cw / 2, y + ch / 2 + 32);
+    if (c.label) { ctx.font = '700 92px Pop'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 24; ctx.fillText(c.label, x + cw / 2, y + ch / 2 + 32); }
     ctx.restore();
   }
 }
@@ -172,43 +174,60 @@ async function drawShot(ctx, shot, t) {
   ctx.restore();
 }
 
-export async function frame(t) {
+// one composited image at time t into ctx (no motion blur)
+async function compose(c, t) {
   const shots = SC.shots;
   const i = shots.findIndex(s => t >= s.t0 && t < s.t1);
   const cur = shots[i < 0 ? shots.length - 1 : i];
-  await drawShot(bufA.getContext('2d'), cur, t);
-  let img = bufA;
-  // transition INTO cur (defined on cur.in)
   const tr = cur.in, prev = shots[shots.indexOf(cur) - 1];
-  if (tr && prev && t < cur.t0 + (tr.dur ?? .25)) {
-    const k = prog(t, cur.t0, tr.dur ?? .25);
-    await drawShot(bufB.getContext('2d'), prev, Math.min(t, prev.t1 - 1e-3) );
-    const tc = tmp.getContext('2d'); tc.globalAlpha = 1; tc.filter = 'none';
+  const D = tr?.dur ?? .3;
+  if (!(tr && prev && t < cur.t0 + D)) { await drawShot(c, cur, t); }
+  else {
+    const k = prog(t, cur.t0, D);
+    await drawShot(bufA.getContext('2d'), cur, t);
+    await drawShot(bufB.getContext('2d'), prev, Math.min(t, prev.t1 - 1e-3));
+    const z = (img, s, a, cy = .45) => { c.save(); c.globalAlpha = a; c.translate(W / 2, H * cy); c.scale(s, s); c.translate(-W / 2, -H * cy); c.drawImage(img, 0, 0); c.restore(); };
+    c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
     if (tr.type === 'whip') {
-      // outgoing rushes toward camera with zoom blur, incoming settles from 1.15 -> 1
-      tc.fillStyle = '#000'; tc.fillRect(0, 0, W, H);
-      const ko = ease.in(clamp(k / .55)), ki = ease.out(clamp((k - .35) / .65));
-      if (k < .65) for (let j = 0; j < 8; j++) { const s = 1 + ko * (.25 + j * .09); tc.globalAlpha = (1 - clamp((k - .3) / .35)) / (1 + j * .5); tc.setTransform(s, 0, 0, s, W / 2 * (1 - s), H * .45 * (1 - s)); tc.drawImage(bufB, 0, 0); }
-      tc.setTransform(1, 0, 0, 1, 0, 0);
-      if (ki > 0) { const s = lerp(1.18, 1, ki); tc.globalAlpha = ki; tc.filter = `blur(${(1 - ki) * 18}px)`; tc.setTransform(s, 0, 0, s, W / 2 * (1 - s), H * .45 * (1 - s)); tc.drawImage(bufA, 0, 0); tc.setTransform(1, 0, 0, 1, 0, 0); tc.filter = 'none'; }
-      img = tmp;
+      // outgoing rushes into the lens, short warm flash, incoming lands from a slight zoom
+      const ko = ease.in(clamp(k / .55)), ki = ease.out(clamp((k - .38) / .62));
+      if (k < .62) z(bufB, 1 + 1.5 * ko, 1 - clamp((k - .36) / .26));
+      if (k > .34) z(bufA, lerp(1.4, 1, ki), clamp((k - .34) / .24));
+      const fl = Math.exp(-Math.pow((k - .44) / .1, 2));
+      c.save(); c.globalCompositeOperation = 'screen'; c.globalAlpha = .5 * fl; c.fillStyle = '#ffb36b'; c.fillRect(0, 0, W, H); c.restore();
+    } else if (tr.type === 'zoomin' || tr.type === 'blur') {
+      // smooth push into the next shot
+      const ki = ease.out(k);
+      z(bufB, lerp(1, 1.12, ease.in(k)), 1);
+      z(bufA, lerp(1.22, 1, ki), clamp(k / .45));
     } else if (tr.type === 'amber') {
-      // dip through warm amber
-      const dk = k < .5 ? ease.inOut(k / .5) : 1 - ease.inOut((k - .5) / .5);
-      tc.globalAlpha = 1; tc.drawImage(k < .5 ? bufB : bufA, 0, 0);
-      tc.globalAlpha = dk; warmBg(tc, .5, .5, 1.2); tc.globalAlpha = 1;
-      img = tmp;
-    } else if (tr.type === 'blur') {
-      tc.globalAlpha = 1; tc.filter = `blur(${(1 - ease.out(k)) * 26}px)`; tc.drawImage(bufA, 0, 0); tc.filter = 'none';
-      img = tmp;
+      const ko = ease.inOut(clamp(k / .5)), ki = ease.inOut(clamp((k - .5) / .5));
+      if (k < .5) { z(bufB, 1 + .08 * ko, 1); c.globalAlpha = ko; warmBg(c, .5, .5, 1.2); c.globalAlpha = 1; }
+      else { z(bufA, lerp(1.1, 1, ki), 1); c.globalAlpha = 1 - ki; warmBg(c, .5, .5, 1.2); c.globalAlpha = 1; }
     } else if (tr.type === 'slide') {
-      const e = ease.inOut(k); tc.fillStyle = '#000'; tc.fillRect(0, 0, W, H);
-      tc.drawImage(bufB, -W * e, 0); tc.drawImage(bufA, W * (1 - e), 0); img = tmp;
-    }
+      const e = ease.inOut(k); c.drawImage(bufB, -W * e, 0); c.drawImage(bufA, W * (1 - e), 0);
+    } else await drawShot(c, cur, t);
   }
-  octx.globalAlpha = 1; octx.filter = 'none'; octx.drawImage(img, 0, 0);
-  for (const L of SC.lockups || []) drawLockup(octx, L, t, W, H);
-  vignette(octx, SC.vignette ?? .5); grain(octx, t);
+  for (const L of SC.lockups || []) drawLockup(c, L, t, W, H);
+  vignette(c, SC.vignette ?? .4);
+}
+// motion blur: average sub-frames (180-degree shutter) whenever something moves fast
+const subBuf = mk();
+function needsBlur(t) {
+  for (const s of SC.shots) { if (s.in && t >= s.t0 - .02 && t < s.t0 + (s.in.dur ?? .3) + .03) return 8; if (t >= s.t0 && t < s.t0 + .55 && (s.kind === '3d' || s.kind === 'stack')) return 4; if (s.kind === 'stack' && s.cards?.some(cd => t >= s.t0 + cd.at && t < s.t0 + cd.at + .45)) return 5; }
+  for (const L of SC.lockups || []) for (const r of L.lines.flat()) if ((r.k === 'b' || r.k === 'bo') && t >= r.at && t < r.at + .2) return 3;
+  return 1;
+}
+export async function frame(t) {
+  const K = needsBlur(t);
+  if (K === 1) { await compose(octx, t); grain(octx, t); return; }
+  const sc = subBuf.getContext('2d');
+  for (let j = 0; j < K; j++) {
+    const tj = t + (j / (K - 1) - .5) * (.5 / FPS);
+    await compose(sc, tj);
+    octx.globalAlpha = 1 / (j + 1); octx.drawImage(subBuf, 0, 0);
+  }
+  octx.globalAlpha = 1; grain(octx, t);
 }
 
 export async function boot(name) {
@@ -217,6 +236,8 @@ export async function boot(name) {
   initThree();
   const mod = await import(`/videos/${name}/scene.js`);
   SC = await mod.default({ THREE, W, H, C, ease, prog, clamp, lerp, warmBg });
+  // captions never hang over a cut: end each lockup .2 s before its shot ends (unless keep)
+  for (const L of SC.lockups || []) { if (L.keep) continue; const sh = SC.shots.find(x => L.t0 >= x.t0 - .05 && L.t0 < x.t1); if (sh && sh !== SC.shots[SC.shots.length - 1]) L.t1 = Math.min(L.t1, sh.t1 - .2); }
   window.SCENE_INFO = { duration: SC.duration };
   window.SCENE_EVENTS = { duration: SC.duration,
     transitions: SC.shots.filter(x => x.in).map(x => ({ t: x.t0, type: x.in.type })),
