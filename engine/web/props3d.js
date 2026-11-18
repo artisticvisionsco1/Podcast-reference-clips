@@ -174,3 +174,85 @@ export function phoneScene({ env }) {
     camera.position.z = 7.5 - t * .2; camera.lookAt(camera.userData.look); d(t);
   } };
 }
+
+// ---------- brain (code-built: displaced hemispheres with ridged folds + glowing neurons) ----------
+function hash3(x, y, z) { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); }
+function vnoise(x, y, z) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+  const L = (a, b, k) => a + (b - a) * k; const h = (i, j, k) => hash3(xi + i, yi + j, zi + k);
+  return L(L(L(h(0,0,0), h(1,0,0), u), L(h(0,1,0), h(1,1,0), u), v), L(L(h(0,0,1), h(1,0,1), u), L(h(0,1,1), h(1,1,1), u), v), w);
+}
+function ridged(x, y, z) { let a = 0, f = 1, amp = 1; for (let o = 0; o < 2; o++) { const n = 1 - Math.abs(vnoise(x * f, y * f, z * f) * 2 - 1); a += n * n * amp; f *= 2.1; amp *= .5; } return a; }
+
+export function brainMesh(matOpts = {}) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshPhysicalMaterial({ color: 0xe09a6a, metalness: .35, roughness: .42, clearcoat: .5, clearcoatRoughness: .35, ...matOpts });
+  for (const side of [-1, 1]) {
+    const geo = new THREE.IcosahedronGeometry(1, 110); const p = geo.attributes.position; const v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      // hemisphere shape: long front-back, flat inner wall, tapered bottom
+      let x = v.x * .78, y = v.y * .82, z = v.z * 1.12;
+      if (side * x < 0) x *= .18;                       // flatten the medial wall
+      if (y < 0) { y *= .75; z *= 1 - .15 * -y; }
+      const w1 = vnoise(v.x * 2.6 + side * 5, v.y * 2.6, v.z * 2.6), w2 = vnoise(v.x * 2.6 + 9, v.y * 2.6 + 3, v.z * 2.6 - 2);
+      const fold = Math.abs(Math.sin(v.x * 10 + v.y * 12 + v.z * 8 + w1 * 15 + w2 * 9));
+      const k = .06 * Math.pow(fold, .4) - .05;                          // gyri bumps / sulci grooves
+      const n = new THREE.Vector3(x, y, z).normalize();
+      p.setXYZ(i, x + n.x * k + side * .2, y + n.y * k, z + n.z * k);
+    }
+    geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo, mat));
+  }
+  // cerebellum + stem
+  const cb = new THREE.Mesh(new THREE.SphereGeometry(.36, 48, 32), mat); cb.scale.set(1.5, .7, 1); cb.position.set(0, -.55, -.62); g.add(cb);
+  const st = new THREE.Mesh(new THREE.CylinderGeometry(.15, .1, .55, 24), mat); st.position.set(0, -.8, -.3); st.rotation.x = .35; g.add(st);
+  return g;
+}
+
+export function brainScene({ env, glowFade = [1, 1] }) {
+  const { scene, camera } = stage({ env, fov: 30, cam: [0, .6, 9.5], look: [0, .2, 0], envI: .35 });
+  const brain = brainMesh(); scene.add(brain);
+  // neurons: points inside + connections
+  const pts = [], N = 70; for (let i = 0; i < N; i++) { const v = new THREE.Vector3((Math.random() - .5) * 2.2, (Math.random() - .3) * 1.4, (Math.random() - .5) * 2.0); if (v.length() < 1.15) pts.push(v); }
+  const lp = []; pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i && a.distanceTo(b) < .55) lp.push(a.x, a.y, a.z, b.x, b.y, b.z); }));
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+  const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0xffa040, transparent: true, opacity: .0, blending: THREE.AdditiveBlending, depthWrite: false })); scene.add(lines);
+  const key = new THREE.SpotLight(0xffc890, 30, 20, .5, .6); key.position.set(4, 5, 5); scene.add(key);
+  const rim = new THREE.PointLight(AMBER, 22, 12); rim.position.set(-3, 2, -3); scene.add(rim);
+  const under = new THREE.PointLight(0xff5a10, 8, 8); under.position.set(0, -2.5, 1.5); scene.add(under);
+  const halo = glowSprite(6, 'rgba(255,130,30,.22)'); halo.position.set(0, 0, -2); scene.add(halo);
+  const d = dust(scene, 220, [7, 9, 6], [0, 0, 1]);
+  return { scene, camera, brain, lines, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
+    brain.rotation.y = -1.25 + t * .25; lines.rotation.y = brain.rotation.y;
+    brain.position.y = Math.sin(t * 1.3) * .04;
+    lines.material.opacity = Math.min(.55, t * .5) * (.75 + .25 * Math.sin(t * 6));
+    camera.position.z = 9.5 - t * .3; camera.lookAt(camera.userData.look); d(t);
+  } };
+}
+
+// ---------- spinning gold coin (flip of a coin) ----------
+export function coinFlipScene({ env }) {
+  const { scene, camera } = stage({ env, cam: [0, 1.4, 7.5], look: [0, 1.6, 0], envI: .45 });
+  const m = gold();
+  const prof = [[0, -.07], [.9, -.07], [.95, -.05], [.95, .05], [.9, .07], [.8, .07], [.78, .05], [0, .05]].map(([x, y]) => new THREE.Vector2(x, y));
+  const coin = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.LatheGeometry(prof, 96), m); body.rotation.x = Math.PI / 2; coin.add(body);
+  // embossed face: ring + star-ish relief on both sides
+  for (const s of [1, -1]) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.62, .03, 12, 96), m); ring.position.z = s * .055; coin.add(ring);
+    const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, r = i % 2 ? .2 : .45; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    const star = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: .03, bevelEnabled: true, bevelSize: .015, bevelThickness: .015, bevelSegments: 2 }), m);
+    star.position.z = s * .05; if (s < 0) star.rotation.y = Math.PI; coin.add(star);
+  }
+  coin.position.y = 1.6; scene.add(coin);
+  const key = new THREE.SpotLight(0xffc890, 32, 20, .5, .6); key.position.set(3, 6, 5); key.target = coin; scene.add(key);
+  const rim = new THREE.PointLight(AMBER, 20, 12); rim.position.set(-3, 2.5, -2.5); scene.add(rim);
+  const halo = glowSprite(5, 'rgba(255,140,30,.22)'); halo.position.set(0, 1.6, -1.5); scene.add(halo);
+  const d = dust(scene);
+  return { scene, camera, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
+    coin.rotation.x = t * 9.5; coin.rotation.y = .5; coin.position.y = 1.6 + Math.sin(Math.min(t, 2.2) / 2.2 * Math.PI) * .5;
+    camera.position.z = 7.5 - t * .3; camera.lookAt(camera.userData.look); d(t);
+  } };
+}

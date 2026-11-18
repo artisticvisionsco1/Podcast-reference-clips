@@ -108,7 +108,7 @@ function drawLockup(ctx, L, t) {
     const wd = items.reduce((a, r) => a + r.wd, 0) + gap * (items.length - 1);
     return { items, wd, h: Math.max(...items.map(r => r.h)) };
   });
-  const total = rows.reduce((a, r) => a + r.h * .82, 0); y -= total / 2;
+  const total = rows.reduce((a, r) => a + r.h * 1.0 + 8 * sc, 0); y -= total / 2;
   for (const row of rows) {
     let x = W / 2 - row.wd / 2; const base = y + row.h * .78;
     for (const r of row.items) {
@@ -116,7 +116,7 @@ function drawLockup(ctx, L, t) {
       if (k > 0) drawRun(ctx, r, x, base, k, t, sc, outA);
       x += r.wd + gap;
     }
-    y += row.h * .82;
+    y += row.h * 1.0 + 8 * sc;
   }
 }
 function drawRun(ctx, r, x, base, k, t, sc, outA) {
