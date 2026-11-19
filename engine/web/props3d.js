@@ -293,12 +293,14 @@ export function brainFxScene({ env, mode = 'decay' }) {
 export function moonScene({ env }) {
   const { scene, camera } = stage({ env, fov: 30, cam: [0, -.6, 11], look: [0, -.6, 0], fog: 0x07050a, envI: .1 });
   const geo = new THREE.IcosahedronGeometry(1.35, 96); const pos = geo.attributes.position, v = new THREE.Vector3();
-  const craters = Array.from({ length: 26 }, () => ({ c: new THREE.Vector3().randomDirection(), r: .08 + Math.random() * .25 }));
+  let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;  // seeded: same moon every render
+  const craters = Array.from({ length: 40 }, () => { const u = rnd() * 2 - 1, a = rnd() * 6.2832, q = Math.sqrt(1 - u * u);
+    return { c: new THREE.Vector3(q * Math.cos(a), u, q * Math.sin(a)), r: .07 + rnd() * .22 }; });
   for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).normalize(); let h = 0; for (const k of craters) { const d = v.distanceTo(k.c) / k.r; h -= .045 * Math.exp(-d * d * 2.2); h += .02 * Math.exp(-Math.pow((d - 1.05) / .18, 2)); } v.multiplyScalar(1.35 * (1 + h)); pos.setXYZ(i, v.x, v.y, v.z); }
   geo.computeVertexNormals();
-  const moon = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xf0d2a8, roughness: .95, metalness: 0, emissive: 0x3a2208, emissiveIntensity: .3 }));
+  const moon = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xe0b888, roughness: .95, metalness: 0, emissive: 0x2a1404, emissiveIntensity: .25 }));
   scene.add(moon);
-  const sun = new THREE.DirectionalLight(0xffe2b8, 3.2); sun.position.set(4, 2, 3); scene.add(sun);
+  const sun = new THREE.DirectionalLight(0xffd8a8, 2.2); sun.position.set(5, 2.5, 2); scene.add(sun);
   scene.add(new THREE.AmbientLight(0x2a1a30, .35));
   const halo = glowSprite(7, 'rgba(255,170,90,.28)'); halo.position.z = -1; scene.add(halo);
   // stars

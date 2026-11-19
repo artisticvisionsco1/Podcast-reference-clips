@@ -49,14 +49,18 @@ const built = new Map();
 function render3d(shot, lt, ctx) {
   if (!built.has(shot)) built.set(shot, shot.build({ THREE, env: envTex }));
   const b = built.get(shot);
+  const h = b.hero, u = h?.userData, o = u?.off;
+  // undo last frame's entry offset first, so offsets never accumulate when update() leaves the pose alone
+  if (o) { h.position.x -= o.x; h.position.y -= o.y; h.rotation.y -= o.ry; h.rotation.z -= o.rz; h.scale.setScalar(u.s0); }
   b.update(lt);
   const en = shot.enter ?? 'rise';
-  if (b.hero && en) {
+  if (h && en) {
     const k = clamp(lt / (shot.enterDur ?? .7)), kb = ease.back(k), ko = ease.out(k);
-    const sc0 = b.hero.userData.s0 ?? (b.hero.userData.s0 = b.hero.scale.x);
-    b.hero.scale.setScalar(sc0 * lerp(.3, 1, kb));
-    if (en === 'rise') { b.hero.position.y += (1 - ko) * -1.6; b.hero.rotation.y += (1 - ko) * 2.4; }
-    if (en === 'side') { b.hero.position.x += (1 - ko) * 3.2; b.hero.rotation.z += (1 - ko) * -.6; }
+    const sc0 = u.s0 ?? (u.s0 = h.scale.x);
+    const n = { x: en === 'side' ? (1 - ko) * 3.2 : 0, y: en === 'rise' ? (1 - ko) * -1.6 : 0,
+                ry: en === 'rise' ? (1 - ko) * 2.4 : 0, rz: en === 'side' ? (1 - ko) * -.6 : 0 };
+    h.position.x += n.x; h.position.y += n.y; h.rotation.y += n.ry; h.rotation.z += n.rz;
+    h.scale.setScalar(sc0 * lerp(.3, 1, kb)); u.off = n;
   }
   renderPass.scene = b.scene; renderPass.camera = b.camera;
   const bl = b.bloom || {}; bloom.strength = bl.strength ?? .9; bloom.radius = bl.radius ?? .55; bloom.threshold = bl.threshold ?? .72;
