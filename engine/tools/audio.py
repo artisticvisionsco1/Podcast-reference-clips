@@ -17,8 +17,11 @@ def load(path):
 cache = {}
 def sfx(n):
     if n not in cache:
-        x = load(f"{root}/assets/sfx/{n}.mp3"); x /= (np.abs(x).max() + 1e-9)
+        x = load(f"{root}/assets/sfx/{n}.mp3")
         env = np.convolve(np.abs(x), np.ones(480) / 480, mode="same")
+        # loudness-match every sample: RMS of its loudest 200 ms -> 0.2
+        w = int(.2 * SR); pkc = int(np.argmax(env)); seg = x[max(0, pkc - w // 2):pkc + w // 2]
+        x = x * (.2 / (np.sqrt(np.mean(seg ** 2)) + 1e-9)); x = np.tanh(x * 1.2) / 1.2
         cache[n] = (x, int(np.argmax(env)))
     return cache[n]
 
@@ -31,25 +34,31 @@ def place(n, t, gain, align="peak", maxlen=None, fade=.08):
     a, b = max(0, s), min(N, s + len(x))
     if b > a: track[a:b] += x[a - s:b - s] * gain
 
-# hook hit at the very start
-place("whoosh_deep_impact", 0.02, .3, align="start", maxlen=1.8)
+# hook hit at the very start (levels below are relative to the loudness-matched samples)
+place("whoosh_deep_impact", 0.0, .55, align="start", maxlen=1.8)
 for tr in ev["transitions"]:
     t, ty = tr["t"], tr["type"]
-    if ty == "whip": place("whoosh_cine_fast", t + .14, .8); place("air_woosh", t + .1, .35)
-    elif ty == "amber": place("whoosh_tunnel", t + .2, .6, maxlen=1.6)
-    elif ty in ("zoomin", "blur"): place("swoosh_wind_short", t + .08, .4)
-    elif ty == "slide": place("swoosh_fast", t + .1, .5)
+    if ty == "whip": place("whoosh_cine_fast", t + .16, .9); place("air_woosh", t + .12, .35)
+    elif ty == "amber": place("whoosh_tunnel", t + .22, .7, maxlen=1.6)
+    elif ty in ("zoomin", "blur"): place("swoosh_wind_short", t + .1, .45)
+    elif ty == "slide": place("swoosh_fast", t + .1, .6)
 for sh in ev["shots"]:
-    for ct in sh["cards"]: place("swoosh_fast", ct + .18, .55)
+    for ct in sh["cards"]: place("swoosh_fast", ct + .18, .6)
 for r in ev["runs"]:
-    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .32)
-    elif r["k"] == "hl": place("typing_soft", r["t"], .45, align="start", maxlen=.55)
+    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .35)
+    elif r["k"] == "hl": place("typing_soft", r["t"], .55, align="start", maxlen=.55)
 for e in ev.get("sfx", []): place(e["n"], e["t"], e.get("g", .4), e.get("align", "peak"), e.get("max"))
 
 def wav(path, x):
     y = (np.clip(x, -1, 1) * 32767).astype(np.int16)
     with wave.open(path, "w") as w: w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(y.tobytes())
 fxp = f"{root}/out/{name}.sfx.wav"; wav(fxp, track * .9)
+# de-click the voice at edit joins (12 ms raised-cosine dip)
+vraw = load(f"{root}/videos/{name}/audio.wav")
+for j in ev.get("joins", []):
+    c = int(j * SR); h = int(.006 * SR)
+    if h < c < len(vraw) - h: vraw[c - h:c + h] *= 1 - np.hanning(2 * h)
+vpath = f"{root}/out/{name}.voice.wav"; wav(vpath, vraw)
 os.makedirs(f"{root}/renders", exist_ok=True)
 out = f"{root}/renders/{name}.mp4"
 voice = ("[1:a]aformat=channel_layouts=mono,highpass=f=75,"
@@ -61,7 +70,7 @@ mus = (f"[2:a]atrim=0:{dur + .5},aformat=channel_layouts=stereo,highpass=f=90,lo
        "[m0][vs]sidechaincompress=threshold=0.03:ratio=5:attack=30:release=400[m];")
 fx = "[3:a]aformat=channel_layouts=stereo,volume=1.0[f];"
 mix = "[v][m][f]amix=inputs=3:normalize=0:duration=first,alimiter=limit=0.93:level=false[a]"
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{root}/out/{name}.silent.mp4", "-i", f"{root}/videos/{name}/audio.wav",
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{root}/out/{name}.silent.mp4", "-i", vpath,
                 "-i", music, "-i", fxp, "-filter_complex", voice + mus + fx + mix,
                 "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-ar", "48000", "-shortest", out], check=True)
 print("wrote", out)

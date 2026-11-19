@@ -5,12 +5,12 @@
 //   bo bold Poppins 700 orange gradient sc brush script (Kaushan) orange gradient, write-on
 //   fw fancy script (Pinyon) white, write-on   hl Poppins 800 white typed into an orange box
 const KIND = {
-  s:  { font: '500 {px}px Pop', px: 64, lh: 1.02, dur: .16 },
-  b:  { font: '800 {px}px Pop', px: 142, lh: .92, dur: .28 },
-  bo: { font: '700 {px}px Pop', px: 150, lh: .92, dur: .28 },
-  sc: { font: '400 {px}px Brush2', px: 188, lh: .8, dur: .36 },
-  fw: { font: '400 {px}px Fancy', px: 170, lh: .78, dur: .36 },
-  hl: { font: '800 {px}px Pop', px: 150, lh: 1.12, dur: .5 },
+  s:  { font: '600 {px}px Inter', px: 60, lh: 1.0, dur: .16 },
+  b:  { font: '800 {px}px "Inter Display"', px: 132, lh: .92, dur: .26 },
+  bo: { font: '800 {px}px "Inter Display"', px: 138, lh: .92, dur: .26 },
+  sc: { font: '400 {px}px Brush', px: 176, lh: .8, dur: .34 },
+  fw: { font: '400 {px}px Fancy', px: 160, lh: .8, dur: .34 },
+  hl: { font: '800 {px}px "Inter Display"', px: 138, lh: 1.12, dur: .5 },
 };
 const font = (k, s) => KIND[k].font.replace('{px}', Math.round(KIND[k].px * s));
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -48,15 +48,15 @@ export function drawLockup(ctx, L, t, W, H) {
   // measure at scale 1, then fit the widest row into maxW
   const m = document.createElement('canvas').getContext('2d');
   const meas = (r, s) => { m.font = font(r.k, s); return m.measureText(r.w).width; };
-  const gap = k => (k === 's' ? 20 : 24);
+  const gap = k => (k === 's' ? 16 : 20);
   const rowW = (row, s) => row.filter(r => !r.pos).reduce((a, r, i, arr) => a + meas(r, s) + (i ? gap(r.k) * s : 0), 0);
   const posW = (row, s) => { const p = row.filter(r => r.pos); return p.length ? p.reduce((a, r) => a + meas(r, s), 0) + (p.length > 1 ? 70 * s : 0) : 0; };
   const w1 = Math.max(...L.lines.map(row => Math.max(rowW(row, 1), posW(row, 1))), 1);
-  const s = clamp((L.maxW ?? .84) * W / w1, .55, L.maxScale ?? 1.15);
+  const s = clamp((L.maxW ?? .74) * W / w1, .5, L.maxScale ?? 1.0);
   const wMax = w1 * s;
   const rows = L.lines.map(row => ({ row, h: Math.max(...row.map(r => KIND[r.k].px * KIND[r.k].lh)) * s }));
   const total = rows.reduce((a, r) => a + r.h, 0);
-  const cx = W / 2, cy = H * (L.y ?? .64);
+  const cx = W / 2, cy = H * Math.min(L.y ?? .63, .68);  // TikTok safe zone: keep captions above the bottom UI
   lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, W, H);
   let y = cy - total / 2;
   for (const { row, h } of rows) {

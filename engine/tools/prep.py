@@ -50,16 +50,38 @@ for a, b in zip(cuts, cuts[1:]):
     centre[a:b] = cx
     shots.append({"f0": a, "f1": b, "t0": round(a / FPS, 3), "t1": round(b / FPS, 3), "cx": round(cx, 3), "faces": len(v)})
 
-# pass 2: full-res graded frames, crop 607x1080 around centre, upscale to 1080x1920
+# pass 2: full-res graded frames, crop 607x1080 around centre -> 1080x1920
+# --sr: Real-ESRGAN general x4v3 (engine/models, BSD-3) on a 405x720 copy -> 1620x2880 -> area-down to 1080x1920,
+#       blended 70/30 with Lanczos to keep skin texture; then "HDR" local contrast (CLAHE on L) + clarity.
+SR = "--sr" in sys.argv
+SR_RANGES = [tuple(map(float, r.split("-"))) for r in sys.argv[sys.argv.index("--sr-ranges") + 1].split(",")] if "--sr-ranges" in sys.argv else None
+if SR:
+    import onnxruntime as ort
+    sess = ort.InferenceSession(os.path.join(os.path.dirname(__file__), "..", "models", "realesr-general-x4v3.onnx"), providers=["CPUExecutionProvider"])
+    iname = sess.get_inputs()[0].name
+clahe = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8))
+def hdr(img):
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB); L = lab[..., 0]
+    lab[..., 0] = cv2.addWeighted(L, .45, clahe.apply(L), .55, 0)
+    img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+    big = cv2.GaussianBlur(img, (0, 0), 14); img = cv2.addWeighted(img, 1.22, big, -.22, 0)      # clarity
+    fine = cv2.GaussianBlur(img, (0, 0), 1.2); return cv2.addWeighted(img, 1.35, fine, -.35, 0)  # micro sharpness
+start = int(sys.argv[sys.argv.index("--from") + 1]) if "--from" in sys.argv else 0
 for i, f in enumerate(frames(GRADE, SW, SH)):
     if i >= N: break
+    if i < start: continue
     x0 = int(round(centre[i] * SW - CW / 2))
-    crop = f[:, x0:x0 + CW]
-    up = cv2.resize(crop, (1080, 1920), interpolation=cv2.INTER_LANCZOS4)
-    # mild unsharp to recover upscale softness
-    blur = cv2.GaussianBlur(up, (0, 0), 2.0)
-    up = cv2.addWeighted(up, 1.45, blur, -.45, 0)
-    cv2.imwrite(f"{out}/frames/{i + 1:05d}.jpg", up, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    crop = np.ascontiguousarray(f[:, x0:x0 + CW])
+    lz = cv2.resize(crop, (1080, 1920), interpolation=cv2.INTER_LANCZOS4)
+    if SR and (SR_RANGES is None or any(a - .5 <= i / FPS <= b + .5 for a, b in SR_RANGES)):
+        inp = cv2.cvtColor(cv2.resize(crop, (405, 720), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2RGB).astype(np.float32) / 255
+        o = sess.run(None, {iname: inp.transpose(2, 0, 1)[None]})[0][0].transpose(1, 2, 0)
+        o = cv2.cvtColor((np.clip(o, 0, 1) * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+        up = cv2.addWeighted(cv2.resize(o, (1080, 1920), interpolation=cv2.INTER_AREA), .7, lz, .3, 0)
+    else: up = lz
+    up = hdr(up)
+    cv2.imwrite(f"{out}/frames/{i + 1:05d}.jpg", up, [cv2.IMWRITE_JPEG_QUALITY, 94])
+    if i % 60 == 0: print("frame", i, "/", N, flush=True)
 
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t0), "-t", str(dur), "-i", src, "-vn", "-ac", "2", "-ar", "48000", f"{out}/audio.wav"], check=True)
 json.dump({"src": os.path.basename(src), "t0": t0, "t1": t1, "fps": FPS, "frames": N, "shots": shots}, open(f"{out}/shots.json", "w"), indent=1)

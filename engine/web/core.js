@@ -242,7 +242,7 @@ export async function boot(name) {
   window.SCENE_EVENTS = { duration: SC.duration,
     transitions: SC.shots.filter(x => x.in).map(x => ({ t: x.t0, type: x.in.type })),
     shots: SC.shots.map(x => ({ t: x.t0, kind: x.kind, cards: (x.cards || []).map(c => x.t0 + c.at) })),
-    runs: (SC.lockups || []).flatMap(L => L.lines.flat().map(r => ({ t: r.at, k: r.k, w: r.w }))), sfx: SC.sfx || [] };
+    joins: SC.joins || [], runs: (SC.lockups || []).flatMap(L => L.lines.flat().map(r => ({ t: r.at, k: r.k, w: r.w }))), sfx: SC.sfx || [] };
   window.renderFrame = async t => { await frame(t); };
   window.grab = () => out.toDataURL('image/jpeg', 0.93);
 }

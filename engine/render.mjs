@@ -30,7 +30,7 @@ if (flags.includes('--stills')) {
 } else {
   const fps = 30, from = +(opt('--from') ?? 0), to = +(opt('--to') ?? dur);
   const outF = path.join(ROOT, 'out', `${name}.silent.mp4`);
-  const ff = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p', outF], { stdio: ['pipe', 'inherit', 'inherit'] });
+  const ff = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-tune', 'film', '-pix_fmt', 'yuv420p', outF], { stdio: ['pipe', 'inherit', 'inherit'] });
   const N = Math.round((to - from) * fps), t0 = Date.now();
   for (let i = 0; i < N; i++) { const b = await grab(from + i / fps); if (!ff.stdin.write(b)) await new Promise(r => ff.stdin.once('drain', r)); if (i % 30 === 0) console.log(`frame ${i}/${N} ${((Date.now() - t0) / (i + 1)).toFixed(0)} ms/f`); }
   ff.stdin.end(); await new Promise(r => ff.on('close', r)); console.log('wrote', outF);

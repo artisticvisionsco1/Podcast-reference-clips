@@ -212,7 +212,7 @@ export function brainMesh(matOpts = {}) {
 }
 
 export function brainScene({ env, glowFade = [1, 1] }) {
-  const { scene, camera } = stage({ env, fov: 30, cam: [0, .6, 9.5], look: [0, .2, 0], envI: .35 });
+  const { scene, camera } = stage({ env, fov: 30, cam: [0, .6, 9.5], look: [0, -.45, 0], envI: .35 });
   const brain = brainMesh(); scene.add(brain);
   // neurons: points inside + connections
   const pts = [], N = 70; for (let i = 0; i < N; i++) { const v = new THREE.Vector3((Math.random() - .5) * 2.2, (Math.random() - .3) * 1.4, (Math.random() - .5) * 2.0); if (v.length() < 1.15) pts.push(v); }
@@ -254,5 +254,91 @@ export function coinFlipScene({ env }) {
   return { scene, camera, hero: coin, bloom: { strength: .5, radius: .55, threshold: .82 }, update(t) {
     coin.rotation.x = t * 9.5; coin.rotation.y = .5; coin.position.y = 1.6 + Math.sin(Math.min(t, 2.2) / 2.2 * Math.PI) * .5;
     camera.position.z = 7.5 - t * .3; camera.lookAt(camera.userData.look); d(t);
+  } };
+}
+
+// ---------- brain variants: 'decay' (dims, neurons die, dust falls) and 'flush' (glowing waste particles washed out) ----------
+export function brainFxScene({ env, mode = 'decay' }) {
+  const b = brainScene({ env });
+  const { scene, brain, lines } = b;
+  const mats = []; brain.traverse(o => { if (o.isMesh) mats.push(o.material); });
+  const base = mats[0].color.clone();
+  // particle cloud around the brain
+  const N = 900, g = new THREE.BufferGeometry(), p = new Float32Array(N * 3), v = [];
+  for (let i = 0; i < N; i++) { const d = new THREE.Vector3().randomDirection().multiplyScalar(.5 + Math.random() * .9); p.set([d.x * 1.1, d.y * .8, d.z * 1.2], i * 3); v.push(d.clone().normalize()); }
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, mode === 'flush' ? 'rgba(160,220,255,1)' : 'rgba(255,170,90,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+  const pts = new THREE.Points(g, new THREE.PointsMaterial({ size: mode === 'flush' ? .075 : .035, map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .0 }));
+  scene.add(pts); const p0 = p.slice();
+  const up = b.update;
+  b.update = t => {
+    up(t); pts.rotation.y = brain.rotation.y;
+    if (mode === 'decay') {
+      const k = Math.min(1, t / 3.2);
+      mats.forEach(m => { m.color.copy(base).lerp(new THREE.Color(0x3a2a22), k * .75); m.roughness = .42 + k * .4; });
+      lines.material.opacity = Math.max(0, .55 - k * .7) * (Math.random() > k * .6 ? 1 : .1);
+      pts.material.opacity = .7; for (let i = 0; i < N; i++) { p[i * 3 + 1] = p0[i * 3 + 1] - ((t * .25 + i * .013) % 1.6); }
+      g.attributes.position.needsUpdate = true;
+    } else {
+      pts.material.opacity = Math.min(.95, t * .8);
+      for (let i = 0; i < N; i++) { const s = ((t * .45 + (i % 97) / 97) % 1); const r = .4 + s * 2.4; p[i * 3] = v[i].x * r * 1.1; p[i * 3 + 1] = v[i].y * r * .8 - s * .6; p[i * 3 + 2] = v[i].z * r * 1.2; }
+      g.attributes.position.needsUpdate = true;
+    }
+  };
+  return b;
+}
+
+// ---------- moon (deep sleep / REM) ----------
+export function moonScene({ env }) {
+  const { scene, camera } = stage({ env, fov: 30, cam: [0, -.6, 11], look: [0, -.6, 0], fog: 0x07050a, envI: .1 });
+  const geo = new THREE.IcosahedronGeometry(1.35, 96); const pos = geo.attributes.position, v = new THREE.Vector3();
+  const craters = Array.from({ length: 26 }, () => ({ c: new THREE.Vector3().randomDirection(), r: .08 + Math.random() * .25 }));
+  for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).normalize(); let h = 0; for (const k of craters) { const d = v.distanceTo(k.c) / k.r; h -= .045 * Math.exp(-d * d * 2.2); h += .02 * Math.exp(-Math.pow((d - 1.05) / .18, 2)); } v.multiplyScalar(1.35 * (1 + h)); pos.setXYZ(i, v.x, v.y, v.z); }
+  geo.computeVertexNormals();
+  const moon = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xf0d2a8, roughness: .95, metalness: 0, emissive: 0x3a2208, emissiveIntensity: .3 }));
+  scene.add(moon);
+  const sun = new THREE.DirectionalLight(0xffe2b8, 3.2); sun.position.set(4, 2, 3); scene.add(sun);
+  scene.add(new THREE.AmbientLight(0x2a1a30, .35));
+  const halo = glowSprite(7, 'rgba(255,170,90,.28)'); halo.position.z = -1; scene.add(halo);
+  // stars
+  const sg = new THREE.BufferGeometry(), sp = []; for (let i = 0; i < 500; i++) sp.push((Math.random() - .5) * 30, (Math.random() - .5) * 50, -10 - Math.random() * 10);
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: .06, color: 0xffe8cc, transparent: true, opacity: .8 })); scene.add(stars);
+  return { scene, camera, hero: moon, bloom: { strength: .6, radius: .6, threshold: .7 }, update(t) {
+    moon.rotation.y = t * .12; moon.rotation.x = .2; camera.position.z = 11 - t * .3; stars.material.opacity = .5 + .3 * Math.sin(t * 2);
+  } };
+}
+
+// ---------- night street with lamps; a wave of light sweeps the debris away ----------
+export function streetScene({ env }) {
+  const { scene, camera } = stage({ env, fov: 40, cam: [0, 2.6, 6], look: [0, 1.6, -10], fog: 0x0b0703, fogNear: 6, fogFar: 40, envI: .1 });
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(8, 80), new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: .55, metalness: .2 })); road.rotation.x = -Math.PI / 2; road.position.z = -30; scene.add(road);
+  const lineM = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: .6 });
+  for (let i = 0; i < 20; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(.12, 1.4), lineM); l.rotation.x = -Math.PI / 2; l.position.set(0, .01, 4 - i * 4); scene.add(l); }
+  const poleM = new THREE.MeshStandardMaterial({ color: 0x2a1c12, roughness: .5, metalness: .6 });
+  const lamps = [];
+  for (let i = 0; i < 9; i++) for (const s of [-1, 1]) {
+    const z = 2 - i * 7 - (s > 0 ? 3.5 : 0);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, 4.2, 12), poleM); pole.position.set(s * 3.4, 2.1, z); scene.add(pole);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(.9, .06, .06), poleM); arm.position.set(s * 3.0, 4.15, z); scene.add(arm);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(.12, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd9a0 })); bulb.position.set(s * 2.6, 4.05, z); scene.add(bulb);
+    const L = new THREE.PointLight(0xffa040, 3.5, 9, 1.6); L.position.set(s * 2.6, 3.9, z); scene.add(L); lamps.push(L);
+    const gl = glowSprite(1.6, 'rgba(255,170,80,.35)'); gl.position.copy(bulb.position); scene.add(gl);
+  }
+  // debris on the road
+  const N = 1400, dg = new THREE.BufferGeometry(), dp = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) dp.set([(Math.random() - .5) * 6, .03 + Math.random() * .05, 4 - Math.random() * 50], i * 3);
+  dg.setAttribute('position', new THREE.BufferAttribute(dp, 3)); const d0 = dp.slice();
+  const debris = new THREE.Points(dg, new THREE.PointsMaterial({ size: .07, color: 0x8a6a50, transparent: true, opacity: .9 })); scene.add(debris);
+  // the cleaning wave: a bright band moving down the road
+  const wave = new THREE.Mesh(new THREE.PlaneGeometry(6.4, .5), new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false }));
+  wave.rotation.x = -Math.PI / 2; wave.position.y = .03; scene.add(wave);
+  const wl = new THREE.PointLight(0xffb050, 12, 7, 1.4); scene.add(wl);
+  scene.add(new THREE.HemisphereLight(0x302014, 0x050302, .5));
+  return { scene, camera, bloom: { strength: .7, radius: .6, threshold: .65 }, update(t) {
+    const wz = -2 - t * 7; wave.position.z = wz; wl.position.set(0, .8, wz);
+    for (let i = 0; i < N; i++) { const z = d0[i * 3 + 2]; if (z > wz) { const k = Math.min(1, (z - wz) / 3); dp[i * 3] = d0[i * 3] + Math.sign(d0[i * 3] || 1) * k * 4; dp[i * 3 + 1] = d0[i * 3 + 1] + k * 1.2; } }
+    dg.attributes.position.needsUpdate = true;
+    camera.position.z = 6 - t * 1.2; camera.lookAt(0, 1.6, camera.position.z - 16);
   } };
 }
