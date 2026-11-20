@@ -34,19 +34,20 @@ def place(n, t, gain, align="peak", maxlen=None, fade=.08):
     a, b = max(0, s), min(N, s + len(x))
     if b > a: track[a:b] += x[a - s:b - s] * gain
 
-# hook hit at the very start (levels below are relative to the loudness-matched samples)
-place("whoosh_deep_impact", 0.0, .55, align="start", maxlen=1.8)
+# v2 levels (owner 2026-11-20: whooshes were too loud/harsh) -> softer, low-hiss whooshes, ~5 dB lower
+G = ev.get("sfxGain", 1.0)
+place("whoosh_deep_impact", 0.0, .42 * G, align="start", maxlen=1.8)
 for tr in ev["transitions"]:
     t, ty = tr["t"], tr["type"]
-    if ty == "whip": place("whoosh_cine_fast", t + .16, .9); place("air_woosh", t + .12, .35)
-    elif ty == "amber": place("whoosh_tunnel", t + .22, .7, maxlen=1.6)
-    elif ty in ("zoomin", "blur"): place("swoosh_wind_short", t + .1, .45)
-    elif ty == "slide": place("swoosh_fast", t + .1, .6)
+    if ty == "whip": place("air_woosh", t + .14, .42 * G); place("whoosh_cine_fast", t + .16, .12 * G)
+    elif ty == "amber": place("whoosh_tunnel", t + .22, .38 * G, maxlen=1.2)
+    elif ty in ("zoomin", "blur"): place("swoosh_wind_short", t + .1, .28 * G)
+    elif ty == "slide": place("sweep_small", t + .1, .26 * G)
 for sh in ev["shots"]:
-    for ct in sh["cards"]: place("swoosh_fast", ct + .18, .6)
+    for ct in sh["cards"]: place("sweep_small", ct + .18, .24 * G)
 for r in ev["runs"]:
-    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .35)
-    elif r["k"] == "hl": place("typing_soft", r["t"], .55, align="start", maxlen=.55)
+    if r["k"] in ("b", "bo"): place("pop_light", r["t"] + .03, .22 * G)
+    elif r["k"] == "hl": place("typing_soft", r["t"], .4 * G, align="start", maxlen=.55)
 for e in ev.get("sfx", []): place(e["n"], e["t"], e.get("g", .4), e.get("align", "peak"), e.get("max"))
 
 def wav(path, x):
@@ -64,11 +65,11 @@ out = f"{root}/renders/{name}.mp4"
 voice = ("[1:a]aformat=channel_layouts=mono,highpass=f=75,"
          "equalizer=f=220:t=q:w=1.1:g=-2.5,equalizer=f=3200:t=q:w=1.0:g=2.5,equalizer=f=9000:t=h:w=1:g=1.5,"
          "deesser=i=.3,acompressor=threshold=-21dB:ratio=2.5:attack=8:release=120:makeup=2,"
-         "loudnorm=I=-14:TP=-1.5:LRA=7,aformat=channel_layouts=stereo,asplit=2[v][vs];")
+         "loudnorm=I=-14:TP=-1.5:LRA=7,aformat=channel_layouts=stereo,asplit=3[v][vs][vs2];")
 mus = (f"[2:a]atrim=0:{dur + .5},aformat=channel_layouts=stereo,highpass=f=90,lowpass=f=9000,"
        f"loudnorm=I=-24:TP=-6,afade=t=in:d=1.2,afade=t=out:st={max(0, dur - 1.5)}:d=1.5[m0];"
        "[m0][vs]sidechaincompress=threshold=0.03:ratio=5:attack=30:release=400[m];")
-fx = "[3:a]aformat=channel_layouts=stereo,volume=1.0[f];"
+fx = "[3:a]aformat=channel_layouts=stereo,highpass=f=60,lowpass=f=7500,volume=1.0[f0];[f0][vs2]sidechaincompress=threshold=0.06:ratio=2.5:attack=15:release=250[f];"
 mix = "[v][m][f]amix=inputs=3:normalize=0:duration=first,alimiter=limit=0.93:level=false[a]"
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{root}/out/{name}.silent.mp4", "-i", vpath,
                 "-i", music, "-i", fxp, "-filter_complex", voice + mus + fx + mix,

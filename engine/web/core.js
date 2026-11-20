@@ -95,11 +95,12 @@ function lightLeak(ctx, t, side = -1) {
   ctx.save(); ctx.globalCompositeOperation = 'screen';
   const x = W * (side < 0 ? .08 : .92) + Math.sin(t * .4) * 60, y = H * (.22 + .04 * Math.sin(t * .3));
   const g = ctx.createRadialGradient(x, y, 0, x, y, H * .42);
-  g.addColorStop(0, 'rgba(255,150,50,.42)'); g.addColorStop(.45, 'rgba(255,100,20,.16)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  const lk = SC?.leak ?? .5;  // v2: subtler leak (old one washed the blacks)
+  g.addColorStop(0, `rgba(255,150,50,${.42 * lk})`); g.addColorStop(.45, `rgba(255,100,20,${.16 * lk})`); g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   const x2 = W * (side < 0 ? .95 : .05), y2 = H * (.08 + .03 * Math.sin(t * .5 + 1));
   const g2 = ctx.createRadialGradient(x2, y2, 0, x2, y2, H * .28);
-  g2.addColorStop(0, 'rgba(255,120,30,.22)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+  g2.addColorStop(0, `rgba(255,120,30,${.22 * lk})`); g2.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 // b-roll frames: videos/<v>/broll/<dir>/00001.jpg (30 fps)
@@ -159,7 +160,7 @@ function vignette(ctx, k = .55) {
 }
 let grainC;
 function grain(ctx, t) {
-  if (!grainC) { grainC = []; for (let i = 0; i < 6; i++) { const c = document.createElement('canvas'); c.width = 540; c.height = 960; const x = c.getContext('2d'); const d = x.createImageData(540, 960); for (let j = 0; j < d.data.length; j += 4) { const v = Math.random() * 255; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; d.data[j + 3] = 14; } x.putImageData(d, 0, 0); grainC.push(c); } }
+  if (!grainC) { grainC = []; for (let i = 0; i < 6; i++) { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); const d = x.createImageData(W, H); const ga = SC?.grain ?? 9; for (let j = 0; j < d.data.length; j += 4) { const v = 128 + (Math.random() + Math.random() - 1) * 127; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; d.data[j + 3] = ga; } x.putImageData(d, 0, 0); grainC.push(c); } }
   ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.drawImage(grainC[Math.floor(t * FPS) % 6], 0, 0, W, H); ctx.restore();
 }
 
@@ -246,7 +247,7 @@ export async function boot(name) {
   window.SCENE_EVENTS = { duration: SC.duration,
     transitions: SC.shots.filter(x => x.in).map(x => ({ t: x.t0, type: x.in.type })),
     shots: SC.shots.map(x => ({ t: x.t0, kind: x.kind, cards: (x.cards || []).map(c => x.t0 + c.at) })),
-    joins: SC.joins || [], runs: (SC.lockups || []).flatMap(L => L.lines.flat().map(r => ({ t: r.at, k: r.k, w: r.w }))), sfx: SC.sfx || [] };
+    sfxGain: SC.sfxGain ?? 1, joins: SC.joins || [], runs: (SC.lockups || []).flatMap(L => L.lines.flat().map(r => ({ t: r.at, k: r.k, w: r.w }))), sfx: SC.sfx || [] };
   window.renderFrame = async t => { await frame(t); };
   window.grab = () => out.toDataURL('image/jpeg', 0.93);
 }

@@ -66,8 +66,12 @@ def hdr(img):
     img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
     big = cv2.GaussianBlur(img, (0, 0), 14); img = cv2.addWeighted(img, 1.22, big, -.22, 0)      # clarity
     fine = cv2.GaussianBlur(img, (0, 0), 1.2); return cv2.addWeighted(img, 1.35, fine, -.35, 0)  # micro sharpness
+# grade v2 (owner 2026-11-20: old grade felt low/dull): engine/tools/grade.py, applied after the crop; no CLAHE
+V2 = "--v1" not in sys.argv
+if V2:
+    sys.path.insert(0, os.path.dirname(__file__)); from grade import grade
 start = int(sys.argv[sys.argv.index("--from") + 1]) if "--from" in sys.argv else 0
-for i, f in enumerate(frames(GRADE, SW, SH)):
+for i, f in enumerate(frames("null" if V2 else GRADE, SW, SH)):
     if i >= N: break
     if i < start: continue
     x0 = int(round(centre[i] * SW - CW / 2))
@@ -77,9 +81,9 @@ for i, f in enumerate(frames(GRADE, SW, SH)):
         inp = cv2.cvtColor(cv2.resize(crop, (405, 720), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2RGB).astype(np.float32) / 255
         o = sess.run(None, {iname: inp.transpose(2, 0, 1)[None]})[0][0].transpose(1, 2, 0)
         o = cv2.cvtColor((np.clip(o, 0, 1) * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
-        up = cv2.addWeighted(cv2.resize(o, (1080, 1920), interpolation=cv2.INTER_AREA), .7, lz, .3, 0)
+        up = cv2.addWeighted(cv2.resize(o, (1080, 1920), interpolation=cv2.INTER_AREA), .55 if V2 else .7, lz, .45 if V2 else .3, 0)
     else: up = lz
-    up = hdr(up)
+    up = grade(up) if V2 else hdr(up)
     cv2.imwrite(f"{out}/frames/{i + 1:05d}.jpg", up, [cv2.IMWRITE_JPEG_QUALITY, 94])
     if i % 60 == 0: print("frame", i, "/", N, flush=True)
 

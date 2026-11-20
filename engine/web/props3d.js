@@ -344,3 +344,74 @@ export function streetScene({ env }) {
     camera.position.z = 6 - t * 1.2; camera.lookAt(0, 1.6, camera.position.z - 16);
   } };
 }
+
+// ---------- glass of orange juice; sugar cubes drop in one by one (sugar01 hook) ----------
+// drops: local times (s) when each cube hits the juice. settled: cubes already at the bottom at t=0.
+export function ojGlassScene({ env, drops = [], settled = 0, cam = [0, 1.45, 9.6], sun = false }) {
+  const { scene, camera } = stage({ env, fov: 30, cam, look: [0, 1.15, 0], fog: 0x080503, fogNear: 7, fogFar: 22, envI: .55 });
+  const R = .82, Hh = 2.3;
+  const prof = [[0, 0], [R * .92, 0], [R * .96, .04], [R, .2], [R * 1.06, Hh], [R * 1.02, Hh + .02], [R * .99, .22], [R * .9, .1], [0, .1]];
+  const glass = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 128),
+    new THREE.MeshPhysicalMaterial({ color: 0xffe8d0, metalness: 0, roughness: .06, transparent: true, opacity: .06, envMapIntensity: .7, clearcoat: .6, side: THREE.DoubleSide, depthWrite: false }));
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(R * 1.05, .012, 8, 128), new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: .55 })); lip.rotation.x = Math.PI / 2; lip.position.y = Hh;
+  const lvl0 = 1.62;
+  const juiceM = new THREE.MeshStandardMaterial({ color: 0xff7a00, emissive: 0xff5200, emissiveIntensity: .32, roughness: .3, transparent: true, opacity: .86, envMapIntensity: .35 });
+  const juice = new THREE.Mesh(new THREE.CylinderGeometry(R * .985, R * .93, 1, 96, 1, false), juiceM);
+  const surf = new THREE.Mesh(new THREE.CircleGeometry(R * 1.0, 96), new THREE.MeshStandardMaterial({ color: 0xff9a20, emissive: 0xff7000, emissiveIntensity: .45, roughness: .15, envMapIntensity: .6 }));
+  surf.rotation.x = -Math.PI / 2;
+  const grp = new THREE.Group(); grp.add(glass, lip, juice, surf); scene.add(grp);
+  // sugar cubes
+  const cubeG = new RoundedBoxGeometry(.3, .3, .3, 3, .045);
+  const cubeM = new THREE.MeshStandardMaterial({ color: 0xfff6ea, roughness: .85, emissive: 0x2a1a0a, emissiveIntensity: .25 });
+  const N = drops.length + settled, cubes = [];
+  let sd = 3; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < N; i++) {
+    const m = new THREE.Mesh(cubeG, cubeM); grp.add(m);
+    const ring = i % 4, layer = Math.floor(i / 4);
+    const a = ring * 1.57 + layer * .7 + rnd() * .3;
+    cubes.push({ m, t: i < settled ? -9 : drops[i - settled], x0: (rnd() - .5) * .5, rest: new THREE.Vector3(Math.cos(a) * .36, .27 + layer * .27, Math.sin(a) * .36), spin: new THREE.Vector3(rnd() * 6, rnd() * 6, rnd() * 6) });
+  }
+  // ripples
+  const ripM = () => new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const rips = cubes.map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 64), ripM()); r.rotation.x = -Math.PI / 2; grp.add(r); return r; });
+  // bubbles
+  const B = 160, bg = new THREE.BufferGeometry(), bp = new Float32Array(B * 3), bs = [];
+  for (let i = 0; i < B; i++) { const a = rnd() * 6.28, r = rnd() * R * .85; bp.set([Math.cos(a) * r, .2, Math.sin(a) * r], i * 3); bs.push(rnd()); }
+  bg.setAttribute('position', new THREE.BufferAttribute(bp, 3)); const bp0 = bp.slice();
+  const bubbles = new THREE.Points(bg, new THREE.PointsMaterial({ size: .035, color: 0xfff0c8, transparent: true, opacity: .7, depthWrite: false, blending: THREE.AdditiveBlending })); grp.add(bubbles);
+  // table + light
+  const table = new THREE.Mesh(new THREE.CircleGeometry(9, 64), new THREE.MeshStandardMaterial({ color: 0x1a120b, roughness: .35, metalness: .3 }));
+  table.rotation.x = -Math.PI / 2; scene.add(table);
+  const key = new THREE.SpotLight(0xffe2c0, 16, 20, .5, .6, 1.6); key.position.set(3, 6, 4); key.target = grp; scene.add(key);
+  const rim = new THREE.SpotLight(0xff9a30, 30, 16, .6, .8, 1.5); rim.position.set(-2, 3.5, -4); rim.target = grp; scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0x3a2614, 0x050302, .5));
+  const halo = glowSprite(sun ? 9 : 6, sun ? 'rgba(255,170,70,.42)' : 'rgba(255,140,40,.3)'); halo.position.set(0, 1.5, -2.5); scene.add(halo);
+  const dd = dust(scene, 160, [6, 6, 4], [0, 1.6, 0]);
+  return { scene, camera, hero: grp, bloom: { strength: .55, radius: .55, threshold: .78 }, update(t) {
+    grp.rotation.y = .25 + t * .08;
+    camera.position.z = cam[2] - t * .28; camera.lookAt(0, 1.0, 0);
+    let hit = 0;
+    cubes.forEach((c, i) => {
+      const dt = t - c.t;
+      if (dt < -.55) { c.m.visible = false; rips[i].material.opacity = 0; return; }
+      c.m.visible = true;
+      if (dt < 0) { // falling from above with spin, accelerating
+        const k = 1 + dt / .55; const y = lvl0 + 2.6 - 2.6 * k * k;
+        c.m.position.set(c.x0, y, 0); c.m.rotation.set(c.spin.x * k, c.spin.y * k, c.spin.z * k);
+      } else { // sink and settle at the bottom
+        hit++;
+        const k = 1 - Math.exp(-dt * 3.2);
+        c.m.position.set(lerp3(c.x0, c.rest.x, k), lvl0 - (lvl0 - c.rest.y) * k, lerp3(0, c.rest.z, k));
+        c.m.rotation.set(c.spin.x * (1 + k * .3), c.spin.y, c.spin.z * (1 + k * .2));
+      }
+      const r = rips[i]; const rk = dt >= 0 && dt < 1 ? dt : -1;
+      r.material.opacity = rk >= 0 ? .55 * (1 - rk) : 0; const s = .1 + rk * .75; r.scale.set(s, s, s); r.position.set(c.x0 * .5, lvl0 + .012, 0);
+    });
+    const lvl = lvl0 + hit * .012;
+    juice.scale.y = lvl - .11; juice.position.y = .11 + (lvl - .11) / 2; surf.position.y = lvl;
+    surf.position.y += Math.sin(t * 9) * .004 * Math.min(hit, 1);
+    for (let i = 0; i < B; i++) { const k = (t * (.18 + bs[i] * .25) + bs[i]) % 1; bp[i * 3 + 1] = .14 + k * (lvl - .2); bp[i * 3] = bp0[i * 3] + Math.sin(t * 2 + i) * .02; }
+    bg.attributes.position.needsUpdate = true; dd(t);
+  } };
+}
+const lerp3 = (a, b, k) => a + (b - a) * k;
