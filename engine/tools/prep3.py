@@ -5,7 +5,7 @@ Writes <out_dir>/frames/00001.jpg..., audio.wav (frame-exact), shots.json."""
 import sys, os, json, subprocess, numpy as np, cv2
 sys.path.insert(0, os.path.dirname(__file__)); from grade import grade3, sharpen
 src, out = sys.argv[1], sys.argv[2]
-FPS = int(sys.argv[sys.argv.index('--fps') + 1]) if '--fps' in sys.argv else 24; SW, SH = 1920, 1080   # 24 = source rate: no duplicate SR frames; CW = int(SH * 9 / 16)
+FPS = int(sys.argv[sys.argv.index('--fps') + 1]) if '--fps' in sys.argv else 24; SW, SH = 1920, 1080; CW = int(SH * 9 / 16)  # 24 fps = source rate: no duplicate SR frames
 os.makedirs(f"{out}/frames", exist_ok=True)
 RANGES = [tuple(map(float, r.split("-"))) for r in sys.argv[sys.argv.index("--sr-ranges") + 1].split(",")] if "--sr-ranges" in sys.argv else None
 
