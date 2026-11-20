@@ -415,3 +415,46 @@ export function ojGlassScene({ env, drops = [], settled = 0, cam = [0, 1.45, 9.6
   } };
 }
 const lerp3 = (a, b, k) => a + (b - a) * k;
+
+// ---------- industrial robot arm over a conveyor (ai01: "automate factories") ----------
+export function robotArmScene({ env, arms = 4 }) {
+  const { scene, camera } = stage({ env, fov: 34, cam: [6.5, 5.2, 14.5], look: [0, 1.4, 0], fog: 0x080503, fogNear: 9, fogFar: 30, envI: .5 });
+  const metal = new THREE.MeshPhysicalMaterial({ color: 0xffa040, metalness: .7, roughness: .28, clearcoat: .5, envMapIntensity: 1.2 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2a1c12, metalness: .6, roughness: .45 });
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshStandardMaterial({ color: 0x120c08, roughness: .5, metalness: .2 })); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  // conveyor
+  const belt = new THREE.Mesh(new THREE.BoxGeometry(22, .25, 1.6), dark); belt.position.set(0, .7, 0); scene.add(belt);
+  const stripeM = new THREE.MeshBasicMaterial({ color: 0xffb050, transparent: true, opacity: .35 });
+  const stripes = []; for (let i = 0; i < 30; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(.06, .01, 1.5), stripeM); s.position.set(-11 + i * .75, .83, 0); scene.add(s); stripes.push(s); }
+  const boxM = new THREE.MeshStandardMaterial({ color: 0xc89a6a, roughness: .7 });
+  const boxes = []; for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new RoundedBoxGeometry(.7, .55, .7, 2, .05), boxM); scene.add(b); boxes.push(b); }
+  const mk = x => { // one arm: base, shoulder, upper, fore, gripper
+    const g = new THREE.Group(); g.position.set(x, 0, -1.9); scene.add(g);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(.55, .7, .5, 48), dark); base.position.y = .25; g.add(base);
+    const yaw = new THREE.Group(); yaw.position.y = .5; g.add(yaw);
+    const sh = new THREE.Mesh(new THREE.SphereGeometry(.34, 32, 16), metal); yaw.add(sh);
+    const up = new THREE.Group(); yaw.add(up);
+    const s1 = new THREE.Mesh(new RoundedBoxGeometry(.36, 1.9, .36, 3, .1), metal); s1.position.y = .95; up.add(s1);
+    const el = new THREE.Group(); el.position.y = 1.9; up.add(el);
+    el.add(new THREE.Mesh(new THREE.SphereGeometry(.26, 32, 16), dark));
+    const s2 = new THREE.Mesh(new RoundedBoxGeometry(.28, 1.5, .28, 3, .08), metal); s2.position.y = .75; el.add(s2);
+    const wr = new THREE.Group(); wr.position.y = 1.5; el.add(wr);
+    const hd = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .3, 24), dark); wr.add(hd);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(.07, 16, 8), new THREE.MeshBasicMaterial({ color: 0xffe0a0 })); lamp.position.set(0, .05, .2); wr.add(lamp);
+    const gl = glowSprite(.9, 'rgba(255,170,80,.6)'); gl.position.copy(lamp.position); wr.add(gl);
+    return { g, yaw, up, el, wr };
+  };
+  const A = Array.from({ length: arms }, (_, i) => mk((i - (arms - 1) / 2) * 2.7));
+  const key = new THREE.SpotLight(0xffe0b8, 50, 30, .6, .6, 1.4); key.position.set(4, 10, 6); scene.add(key);
+  const rim = new THREE.SpotLight(0xff8a20, 40, 30, .7, .8, 1.4); rim.position.set(-6, 5, -6); scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0x3a2614, 0x050302, .45));
+  const dd = dust(scene, 200, [16, 6, 8], [0, 2.5, 0]);
+  return { scene, camera, bloom: { strength: .5, radius: .55, threshold: .8 }, update(t) {
+    const sp = 1.1;
+    boxes.forEach((b, i) => { const x = ((i * 2.6 + t * sp) % 23.4) - 11.7; b.position.set(x, 1.1, 0); b.rotation.y = .1 * Math.sin(i); });
+    stripes.forEach((s, i) => { s.position.x = ((i * .75 + t * sp) % 22.5) - 11.25; });
+    A.forEach((a, i) => { const ph = t * 2.2 + i * 1.7; a.yaw.rotation.y = .5 * Math.sin(ph * .5);
+      a.up.rotation.x = .55 + .25 * Math.sin(ph); a.el.rotation.x = 1.35 + .35 * Math.sin(ph + .8); a.wr.rotation.x = .3 * Math.sin(ph * 1.3); });
+    camera.position.x = 6.5 - t * .4; camera.position.z = 14.5 - t * .25; camera.lookAt(0, 1.5, 0); dd(t);
+  } };
+}

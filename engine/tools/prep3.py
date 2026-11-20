@@ -5,7 +5,7 @@ Writes <out_dir>/frames/00001.jpg..., audio.wav (frame-exact), shots.json."""
 import sys, os, json, subprocess, numpy as np, cv2
 sys.path.insert(0, os.path.dirname(__file__)); from grade import grade3, sharpen
 src, out = sys.argv[1], sys.argv[2]
-FPS, SW, SH = 30, 1920, 1080; CW = int(SH * 9 / 16)
+FPS = int(sys.argv[sys.argv.index('--fps') + 1]) if '--fps' in sys.argv else 24; SW, SH = 1920, 1080   # 24 = source rate: no duplicate SR frames; CW = int(SH * 9 / 16)
 os.makedirs(f"{out}/frames", exist_ok=True)
 RANGES = [tuple(map(float, r.split("-"))) for r in sys.argv[sys.argv.index("--sr-ranges") + 1].split(",")] if "--sr-ranges" in sys.argv else None
 
@@ -61,7 +61,7 @@ for i, f in enumerate(frames("null", SW, SH)):
         fx, fy, s = fbox[i]; fx -= x0
         half = s * 1.25; ax, bx_ = int(max(0, fx - half)), int(min(CW, fx + half)); ay, by = int(max(0, fy - half * 1.15)), int(min(SH, fy + half * 1.35))
         if bx_ - ax > 24 and by - ay > 24:
-            reg = crop[ay:by, ax:bx_]; m = max(reg.shape[:2]); sc = min(1.0, 340 / m)
+            reg = crop[ay:by, ax:bx_]; m = max(reg.shape[:2]); sc = min(1.0, 288 / m)
             if sc < 1: reg = cv2.resize(reg, (int(reg.shape[1] * sc), int(reg.shape[0] * sc)), interpolation=cv2.INTER_AREA)
             o = sr(reg)
             X0, Y0, X1, Y1 = int(ax * K), int(ay * K), min(1080, int(bx_ * K)), min(1920, int(by * K))

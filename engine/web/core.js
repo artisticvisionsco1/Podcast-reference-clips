@@ -81,7 +81,7 @@ function loadImg(src) {
 // zoom: {from,to} slow push; punch: [{t, s}] instant scale steps
 async function renderFace(V, shot, lt, ctx) {
   const srcT = (shot.src ?? 0) + lt;
-  const n = Math.max(1, Math.round(srcT * FPS) + 1);
+  const ff = SC.faceFps; const n = Math.max(1, ff ? Math.floor(srcT * ff + 1e-4) + 1 : Math.round(srcT * FPS) + 1);
   const img = await loadImg(`/videos/${V}/frames/${String(n).padStart(5, '0')}.jpg`);
   let s = lerp(shot.zoom?.from ?? 1, shot.zoom?.to ?? 1.06, ease.inOut(lt / (shot.t1 - shot.t0)));
   for (const p of shot.punch || []) if (lt >= p.t) { const pk = ease.out(clamp((lt - p.t) / .12)); s *= lerp(1, p.s, pk); }
