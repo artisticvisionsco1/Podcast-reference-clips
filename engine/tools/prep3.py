@@ -52,8 +52,10 @@ def sr(img):
     inp = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255
     o = sess.run(None, {iname: inp.transpose(2, 0, 1)[None]})[0][0].transpose(1, 2, 0)
     return cv2.cvtColor((np.clip(o, 0, 1) * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+START = int(sys.argv[sys.argv.index("--from") + 1]) if "--from" in sys.argv else 0   # resume
 for i, f in enumerate(frames("null", SW, SH)):
     if i >= N: break
+    if i < START: continue
     x0 = int(round(centre[i] * SW - CW / 2)); crop = np.ascontiguousarray(f[:, x0:x0 + CW])
     up = cv2.resize(crop, (1080, 1920), interpolation=cv2.INTER_LANCZOS4)
     t = i / FPS
