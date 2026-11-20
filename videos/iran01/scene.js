@@ -2,10 +2,10 @@
 import { listCard, nodesCard, peopleRowCard, bannerOverlay } from '/web/cards2d.js';
 const face = (t0, t1, o = {}) => ({ kind: 'face', t0, t1, src: t0, zoom: { from: 1.04, to: 1.1 }, focus: { x: .5, y: .3 }, in: o.in ?? { type: 'zoomin', dur: .3 }, ...o });
 const B = 7.958;  // lies card base
-const lies = listCard({ title: 'WARS', y: .16, gap: 170, tag: 'BASED ON A LIE', items: [
-  { t: 8.2 - B, text: 'VIETNAM', sub: '59,000 Americans dead', tagAt: 14.3 - B },
-  { t: 17.48 - B, text: 'IRAQ', tagAt: 19.3 - B },
-  { t: 21.1 - B, text: 'IRAN', tagAt: 21.86 - B }] });
+const lies = listCard({ title: 'WARS', y: .13, gap: 290, tag: 'BASED ON A LIE', tagBelow: true, items: [
+  { t: 8.2 - B, text: 'VIETNAM', px: 100, sub: '59,000 Americans dead', tagAt: 14.3 - B },
+  { t: 17.48 - B, text: 'IRAQ', px: 100, tagAt: 19.3 - B },
+  { t: 21.1 - B, text: 'IRAN', px: 100, tagAt: 21.86 - B }] });
 const P = 53.94, pres = o => peopleRowCard({ n: 5, y: .3, title: 'ONE PRESIDENT AFTER ANOTHER', times: [55.0 - P, 56.04 - P, 56.78 - P, 57.2 - P, 57.9 - P], ...o });
 export default async () => ({
   duration: 71.333, faceFps: 24, vignette: .38, leak: .3, grain: 8,

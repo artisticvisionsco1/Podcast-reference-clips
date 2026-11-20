@@ -17,8 +17,8 @@ export default async () => ({
     { kind: '3d', t0: 31.9, t1: 39.7, build: robotArmScene, in: { type: 'amber', dur: .45 } },
     { kind: '2d', t0: 39.7, t1: J, draw: truckCard, in: { type: 'whip', dur: .4 } },
     { kind: '2d', t0: J, t1: 57.6, in: { type: 'whip', dur: .4 },
-      draw: listCard({ title: '6–7 MILLION TRANSPORT JOBS', y: .15, gap: 150, tag: '10 YEARS?', items: [
-        { t: 51.25 - J, text: 'UBER DRIVERS', tagAt: 56.6 - J }, { t: 52.03 - J, text: 'CAB DRIVERS', tagAt: 56.75 - J }, { t: 53.07 - J, text: 'BUS DRIVERS', tagAt: 56.9 - J }] }) },
+      draw: listCard({ title: '6–7 MILLION TRANSPORT JOBS', y: .14, gap: 250, tag: '10 YEARS?', tagBelow: true, items: [
+        { t: 51.25 - J, text: 'UBER DRIVERS', px: 86, tagAt: 56.6 - J }, { t: 52.03 - J, text: 'CAB DRIVERS', px: 86, tagAt: 56.75 - J }, { t: 53.07 - J, text: 'BUS DRIVERS', px: 86, tagAt: 56.9 - J }] }) },
     face(57.6, 63.042, { punch: [{ t: 4.97, s: 1.1 }] }),
   ],
   lockups: [

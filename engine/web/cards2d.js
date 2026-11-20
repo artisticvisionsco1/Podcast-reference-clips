@@ -231,9 +231,9 @@ export function listCard(o) {
       if (o.check !== false) { ctx.save(); ctx.translate(x0 + 30, y - 18); ctx.scale(eBk(k), eBk(k)); ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.fillStyle = orangeGrad(ctx, -30, 30); ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 30; ctx.fill();
         ctx.shadowBlur = 0; ctx.strokeStyle = '#2a1204'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-13, 0); ctx.lineTo(-3, 10); ctx.lineTo(14, -10); ctx.stroke(); ctx.restore(); }
       ctx.font = `800 ${it.px ?? 64}px "Inter Display"`; ctx.fillStyle = '#fffaf2'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; ctx.fillText(it.text, x0 + 90, y);
-      if (it.sub) { ctx.font = '600 34px Inter'; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + 46); }
+      if (it.sub) { ctx.font = `600 ${Math.round((it.px ?? 64) * .5)}px Inter`; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + (it.px ?? 64) * .72); }
       ctx.restore();
-      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { ctx.save(); ctx.translate(W - 210, y - 18); ctx.rotate(-.12); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
+      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.35 : P * .62)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
     });
   };
 }
