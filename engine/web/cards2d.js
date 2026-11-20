@@ -257,11 +257,11 @@ export function barsCard(o) {
 export function peopleRowCard(o) {
   return (ctx, lt, { W, H, warmBg }) => {
     warmBg(ctx, .5, .36, 1.1);
-    const a = eOut(lt / .3), n = o.n, gap = (W - 200) / (n - 1), y = H * (o.y ?? .3);
+    const a = eOut(lt / .3), n = o.n, M = o.margin ?? 170, gap = (W - 2 * M) / (n - 1), y = H * (o.y ?? .3);
     if (o.title) label(ctx, o.title, W / 2, y - 150, 42, a, 'center', 800);
-    for (let i = 0; i < n; i++) { const t = o.times[i]; const lit = t != null && lt >= t && !(o.off && o.off[i] != null && lt >= o.off[i]); ctx.save(); ctx.globalAlpha = a; person2d(ctx, 100 + i * gap, y, o.s ?? 1.1, lit, lit ? (lt - t) / .3 : 0); ctx.restore();
-      if (o.labels && o.labels[i] && lit) label(ctx, o.labels[i], 100 + i * gap, y + 80, 30, clamp((lt - t) / .3), 'center', 800); }
-    if (o.hot != null && lt > o.hotAt) { const k = clamp((lt - o.hotAt) / .3); const x = 100 + o.hot * gap; ctx.save(); ctx.globalAlpha = k; ctx.strokeStyle = '#ffd08a'; ctx.lineWidth = 5; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(x, y - 16, 90 * (1.3 - .3 * eOut(k)), 0, 7); ctx.stroke(); ctx.restore();
+    for (let i = 0; i < n; i++) { const t = o.times[i]; const lit = t != null && lt >= t && !(o.off && o.off[i] != null && lt >= o.off[i]); ctx.save(); ctx.globalAlpha = a; person2d(ctx, M + i * gap, y, o.s ?? 1.1, lit, lit ? (lt - t) / .3 : 0); ctx.restore();
+      if (o.labels && o.labels[i] && lit) label(ctx, o.labels[i], M + i * gap, y + 80, 30, clamp((lt - t) / .3), 'center', 800); }
+    if (o.hot != null && lt > o.hotAt) { const k = clamp((lt - o.hotAt) / .3); const x = M + o.hot * gap; ctx.save(); ctx.globalAlpha = k; ctx.strokeStyle = '#ffd08a'; ctx.lineWidth = 5; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(x, y - 16, 90 * (1.3 - .3 * eOut(k)), 0, 7); ctx.stroke(); ctx.restore();
       if (o.hotLabel) pill(ctx, o.hotLabel, x, y + 150, k * 1.3, true); }
   };
 }
