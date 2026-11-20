@@ -7,3 +7,4 @@ videos/*/audio.wav
 assets/sfx/
 assets/music/
 assets/img/
+__pycache__/
