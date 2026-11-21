@@ -243,13 +243,13 @@ export function barsCard(o) {
   return (ctx, lt, { W, H, warmBg }) => {
     warmBg(ctx, .5, .38, 1.1);
     const a = eOut(lt / .3), x0 = 110, w = W - 220, y0 = H * (o.y ?? .16);
-    if (o.title) label(ctx, o.title, W / 2, y0, 40, a, 'center', 800);
+    if (o.title) label(ctx, o.title, W / 2, y0, 50, a, 'center', 800);
     o.bars.forEach((b, i) => {
-      const k = eIO((lt - (b.t ?? 0)) / .6), y = y0 + 80 + i * 150;
-      label(ctx, b.label, x0, y, 38, clamp((lt - (b.t ?? 0)) / .25), 'left', 800);
-      ctx.save(); ctx.fillStyle = 'rgba(255,200,150,.1)'; ctx.beginPath(); ctx.roundRect(x0, y + 24, w, 46, 23); ctx.fill();
-      ctx.fillStyle = b.hot ? orangeGrad(ctx, y + 24, y + 70) : 'rgba(255,230,200,.75)'; if (b.hot) { ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 36; }
-      ctx.beginPath(); ctx.roundRect(x0, y + 24, Math.max(46, w * b.v * k), 46, 23); ctx.fill(); ctx.restore();
+      const k = eIO((lt - (b.t ?? 0)) / .6), y = y0 + 110 + i * 230;
+      label(ctx, b.label, x0, y, 58, clamp((lt - (b.t ?? 0)) / .25), 'left', 800);
+      ctx.save(); ctx.fillStyle = 'rgba(255,200,150,.1)'; ctx.beginPath(); ctx.roundRect(x0, y + 30, w, 76, 38); ctx.fill();
+      ctx.fillStyle = b.hot ? orangeGrad(ctx, y + 30, y + 106) : 'rgba(255,230,200,.75)'; if (b.hot) { ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 36; }
+      ctx.beginPath(); ctx.roundRect(x0, y + 30, Math.max(76, w * b.v * k), 76, 38); ctx.fill(); ctx.restore();
       if (b.note) label(ctx, b.note, x0 + w, y, 34, clamp((lt - (b.t ?? 0) - .5) / .3), 'right', 700);
     });
   };
