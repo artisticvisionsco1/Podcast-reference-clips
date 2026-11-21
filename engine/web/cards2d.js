@@ -273,11 +273,11 @@ export function nodesCard(o) {
     const al = eOut(lt / .3), y = H * .28, xa = W * .24, xb = W * .76;
     const node = (x, txt, k) => { if (k <= 0) return; ctx.save(); ctx.globalAlpha = clamp(k * 2); ctx.translate(x, y); ctx.scale(eBk(k), eBk(k));
       ctx.beginPath(); ctx.arc(0, 0, 120, 0, 7); ctx.fillStyle = 'rgba(40,24,14,.9)'; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#ffb347'; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40; ctx.stroke();
-      ctx.shadowBlur = 0; ctx.font = '800 50px "Inter Display"'; ctx.fillStyle = '#fffaf2'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, 0, 2); ctx.restore(); };
+      ctx.shadowBlur = 0; ctx.font = '800 50px "Inter Display"'; const fz = Math.min(50, 50 * 200 / Math.max(1, ctx.measureText(txt).width)); ctx.font = `800 ${Math.floor(fz)}px "Inter Display"`; ctx.fillStyle = '#fffaf2'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, 0, 2); ctx.restore(); };
     node(xa, o.a, (lt - .1) / .35); node(xb, o.b, (lt - (o.bAt ?? .5)) / .35);
     const lk = eIO((lt - (o.at ?? .9)) / .6);
     if (lk > 0) { const pts = []; for (let i = 0; i <= 40; i++) { const u = i / 40; pts.push([xa + 125 + (xb - xa - 250) * u, y + Math.sin(u * Math.PI * 6 + lt * 8) * 10 * lk]); } glowLine(ctx, pts, lk, 7);
-      if (o.link) label(ctx, o.link, W / 2, y - 60, 36, lk, 'center', 800); }
+      if (o.link) label(ctx, o.link, W / 2, y - 170, 40, lk, 'center', 800); }
     if (o.years != null) { const yk = eOut((lt - o.yearsAt) / 1.0); if (lt > o.yearsAt) { bigNum(ctx, Math.round(o.years * yk) + ' YEARS', W / 2, y + 330, 150, clamp((lt - o.yearsAt) / .3)); } }
   };
 }
@@ -312,5 +312,53 @@ export function bannerOverlay(text, t1, t0 = 0) {
     ctx.shadowBlur = 0; ctx.fillStyle = '#1e0d03'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const fit = Math.min(1, (w - 60) / ctx.measureText(text).width); ctx.font = `800 ${Math.floor(58 * fit)}px "Inter Display"`; ctx.fillText(text, 0, 3);
     ctx.restore();
+  };
+}
+
+// phone chat: messages [{t, text, me}] pop in as bubbles; typing dots before each bot reply (o.typing: [t0,t1])
+export function chatCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .38, 1.1);
+    const a = eOut(lt / .35), pw = 700, ph = o.ph ?? 1000, px = (W - pw) / 2, py = H * .06 + (1 - a) * 80;
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.shadowColor = 'rgba(255,106,0,.5)'; ctx.shadowBlur = 60; ctx.fillStyle = 'rgba(22,14,9,.96)'; ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 70); ctx.fill();
+    ctx.shadowBlur = 0; ctx.lineWidth = 6; ctx.strokeStyle = '#ffb347'; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,200,150,.12)'; ctx.fillRect(px + 6, py + 120, pw - 12, 2);
+    ctx.beginPath(); ctx.arc(px + 90, py + 64, 34, 0, 7); ctx.fillStyle = orangeGrad(ctx, py + 30, py + 98); ctx.fill();
+    ctx.font = '800 30px "Inter Display"'; ctx.fillStyle = '#2a1204'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('AI', px + 90, py + 66);
+    ctx.textAlign = 'left'; ctx.font = '700 38px Inter'; ctx.fillStyle = '#f6e6d2'; ctx.fillText(o.name ?? 'AI Companion', px + 145, py + 52);
+    ctx.font = '500 26px Inter'; ctx.fillStyle = 'rgba(255,200,150,.7)'; ctx.fillText('online', px + 145, py + 88);
+    let y = py + 170;
+    const wrap = (txt, maxw) => { ctx.font = '600 40px Inter'; const words = txt.split(' '), lines = []; let cur = ''; for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxw && cur) { lines.push(cur); cur = w; } else cur = t; } if (cur) lines.push(cur); return lines; };
+    for (const m of o.msgs) {
+      const k = (lt - m.t) / .3; if (k <= 0) continue;
+      const lines = wrap(m.text, pw - 260), bw = Math.max(...lines.map(l => ctx.measureText(l).width)) + 56, bh = lines.length * 50 + 34;
+      const bx = m.me ? px + pw - 40 - bw : px + 40, s = .8 + .2 * eBk(k);
+      ctx.save(); ctx.globalAlpha = clamp(k * 2); ctx.translate(bx + (m.me ? bw : 0), y + bh); ctx.scale(s, s); ctx.translate(-(bx + (m.me ? bw : 0)), -(y + bh));
+      ctx.fillStyle = m.me ? orangeGrad(ctx, y, y + bh) : 'rgba(255,230,205,.14)'; if (m.me) { ctx.shadowColor = 'rgba(255,106,0,.6)'; ctx.shadowBlur = 30; }
+      ctx.beginPath(); ctx.roundRect(bx, y, bw, bh, 34); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.font = '600 40px Inter'; ctx.fillStyle = m.me ? '#2a1204' : '#fffaf2'; ctx.textBaseline = 'top'; lines.forEach((l, i) => ctx.fillText(l, bx + 28, y + 18 + i * 50));
+      ctx.restore(); y += bh + 26;
+    }
+    if (o.typing && lt > o.typing[0] && lt < o.typing[1]) { const bx = px + 40; ctx.fillStyle = 'rgba(255,230,205,.14)'; ctx.beginPath(); ctx.roundRect(bx, y, 150, 80, 34); ctx.fill();
+      for (let i = 0; i < 3; i++) { const b = .5 + .5 * Math.sin(lt * 9 - i * .9); ctx.fillStyle = `rgba(255,200,140,${.4 + .6 * b})`; ctx.beginPath(); ctx.arc(bx + 42 + i * 33, y + 40 - b * 6, 10, 0, 7); ctx.fill(); } }
+    ctx.restore();
+  };
+}
+// a word with a red/orange ban sign drawn across it at o.at
+export function banCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .34, 1.1);
+    const a = eOut(lt / .3), cy = H * .3;
+    if (o.title) label(ctx, o.title, W / 2, cy - 430, 46, a, 'center', 800);
+    ctx.save(); ctx.globalAlpha = a; ctx.font = '800 92px "Inter Display"'; const fz = Math.min(92, 92 * (W - 220) / ctx.measureText(o.word).width);
+    ctx.font = `800 ${Math.floor(fz)}px "Inter Display"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fffaf2'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 20; ctx.fillText(o.word, W / 2, cy); ctx.restore();
+    const k = eOut((lt - o.at) / .45); if (lt <= o.at) return;
+    const R = 360;
+    ctx.save(); ctx.lineWidth = 34; ctx.lineCap = 'round'; ctx.strokeStyle = '#ff5a1a'; ctx.shadowColor = 'rgba(255,70,0,.95)'; ctx.shadowBlur = 60;
+    ctx.beginPath(); ctx.arc(W / 2, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+    const k2 = eOut((lt - o.at - .35) / .3); if (k2 > 0) { const d = R * .707; ctx.beginPath(); ctx.moveTo(W / 2 - d, cy - d); ctx.lineTo(W / 2 - d + 2 * d * k2, cy - d + 2 * d * k2); ctx.stroke(); }
+    ctx.restore();
+    if (o.sub) label(ctx, o.sub, W / 2, cy + R + 90, 44, clamp((lt - o.at - .6) / .3), 'center', 800);
   };
 }
