@@ -16,9 +16,11 @@ export default async () => ({
       draw: counterCard({ label: 'JEFF BEZOS FUND', to: 100, at: 27.6 - 22.5, dur: .9, pre: '$', suf: 'B', y: .3, sub: 'TO AUTOMATE FACTORIES', subAt: 30.25 - 22.5 }) },
     { kind: '3d', t0: 31.9, t1: 39.7, build: robotArmScene, in: { type: 'amber', dur: .45 } },
     { kind: '2d', t0: 39.7, t1: J, draw: truckCard, in: { type: 'whip', dur: .4 } },
-    { kind: '2d', t0: J, t1: 57.6, in: { type: 'whip', dur: .4 },
-      draw: listCard({ title: '6–7 MILLION TRANSPORT JOBS', y: .14, gap: 250, tag: '10 YEARS?', tagBelow: true, items: [
-        { t: 51.25 - J, text: 'UBER DRIVERS', px: 86, tagAt: 56.6 - J }, { t: 52.03 - J, text: 'CAB DRIVERS', px: 86, tagAt: 56.75 - J }, { t: 53.07 - J, text: 'BUS DRIVERS', px: 86, tagAt: 56.9 - J }] }) },
+    { kind: '2d', t0: J, t1: 51.0, in: { type: 'whip', dur: .4 },
+      draw: counterCard({ label: 'TRANSPORTATION JOBS', from: 7, to: 7, at: 48.67 - J, dur: .1, pre: '6–', suf: ' MILLION', px: 170, y: .32, sub: 'IN THE U.S.', subAt: 50.1 - J }) },
+    { kind: '2d', t0: 51.0, t1: 57.6, in: { type: 'slide', dur: .4 },
+      draw: (c, lt, e) => listCard({ title: '6–7 MILLION TRANSPORT JOBS', y: .14, gap: 250, tag: '10 YEARS?', tagBelow: true, items: [
+        { t: 51.25 - J, text: 'UBER DRIVERS', px: 86, tagAt: 56.6 - J }, { t: 52.03 - J, text: 'CAB DRIVERS', px: 86, tagAt: 56.75 - J }, { t: 53.07 - J, text: 'BUS DRIVERS', px: 86, tagAt: 56.9 - J }] })(c, lt + 51.0 - J, e) },
     face(57.6, 63.042, { punch: [{ t: 4.97, s: 1.1 }] }),
   ],
   lockups: [

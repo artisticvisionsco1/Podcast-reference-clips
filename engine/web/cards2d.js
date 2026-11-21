@@ -204,7 +204,8 @@ export function counterCard(o) {
     const v = (o.from ?? 0) + (o.to - (o.from ?? 0)) * k;
     const txt = (o.pre ?? '') + (o.dec ? v.toFixed(o.dec) : Math.round(v).toLocaleString('en-US')) + (o.suf ?? '');
     const pk = clamp((lt - (o.at ?? .1) - (o.dur ?? 1.2)) / .3);
-    ctx.save(); ctx.translate(W / 2, y); const s = 1 + .08 * Math.sin(pk * Math.PI); ctx.scale(s, s); bigNum(ctx, txt, 0, 0, o.px ?? 240, a); ctx.restore();
+    const ap = clamp((lt - (o.at ?? .1) + .15) / .25);  // number appears when it is said (no idle $0)
+    if (ap > 0) { ctx.save(); ctx.translate(W / 2, y); const s = (1 + .08 * Math.sin(pk * Math.PI)) * (.7 + .3 * eBk(ap)); ctx.scale(s, s); bigNum(ctx, txt, 0, 0, o.px ?? 240, a * ap); ctx.restore(); }
     if (o.sub) label(ctx, o.sub, W / 2, y + 90, 50, clamp((lt - (o.subAt ?? 1)) / .3), 'center', 700);
     if (o.sub2) { const k2 = clamp((lt - o.sub2At) / .35); ctx.save(); ctx.globalAlpha = k2; pill(ctx, o.sub2, W / 2, y + 190, k2 * 1.2, true); ctx.restore(); }
     if (o.dots) dotsField(ctx, lt, W, H, o.dots);
