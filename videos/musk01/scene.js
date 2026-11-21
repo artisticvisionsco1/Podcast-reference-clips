@@ -11,7 +11,9 @@ export default async () => ({
     face(5.75, R, { in: { type: 'whip', dur: .35 } }),
     { kind: '2d', t0: R, t1: 21.6, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'WHAT BERNIE RESPECTS', y: .13, gap: 180, items: [
       { t: 10.62 - R, text: 'HARD WORKER', px: 80, sub: '"fanatically"' }, { t: 13.36 - R, text: 'VERY SMART', px: 80 }, { t: 16.38 - R, text: 'GETS THINGS DONE', px: 80 }, { t: 18.6 - R, text: 'NO BS', px: 80 }] }) },
-    face(21.6, P, { punch: [{ t: 6.66, s: 1.1 }] }),
+    face(21.6, 25.667),
+    // DOAC's own b-roll has a typewriter caption band at the bottom: zoom from the top edge so it stays out of frame
+    face(25.667, P, { in: null, zoom: { from: 1.3, to: 1.34 }, focus: { x: .5, y: 0 } }),
     { kind: '2d', t0: P, t1: 41.125, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'FAR TOO MUCH POWER', y: .14, gap: 200, check: true, items: [
       { t: 35.34 - P, text: 'OWNS X', px: 90 }, { t: 37.8 - P, text: 'ROBOTICS', px: 90 }, { t: 40.32 - P, text: 'AI', px: 90 }] }) },
     face(41.125, 48.4, { punch: [{ t: 4.99, s: 1.1 }] }),
