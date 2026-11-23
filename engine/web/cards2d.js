@@ -234,7 +234,7 @@ export function listCard(o) {
       ctx.font = `800 ${it.px ?? 64}px "Inter Display"`; ctx.fillStyle = '#fffaf2'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; ctx.fillText(it.text, x0 + 90, y);
       if (it.sub) { ctx.font = `600 ${Math.round((it.px ?? 64) * .5)}px Inter`; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + (it.px ?? 64) * .72); }
       ctx.restore();
-      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.35 : P * .62)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
+      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.35 : P * 1.0)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
     });
   };
 }
@@ -360,5 +360,42 @@ export function banCard(o) {
     const k2 = eOut((lt - o.at - .35) / .3); if (k2 > 0) { const d = R * .707; ctx.beginPath(); ctx.moveTo(W / 2 - d, cy - d); ctx.lineTo(W / 2 - d + 2 * d * k2, cy - d + 2 * d * k2); ctx.stroke(); }
     ctx.restore();
     if (o.sub) label(ctx, o.sub, W / 2, cy + R + 90, 44, clamp((lt - o.at - .6) / .3), 'center', 800);
+  };
+}
+
+// vertical dependency chain: boxes light up top→down with glowing links; at o.breakAt they go dark one by one
+// (falling, tilted, red) and o.end stamps a pill; o = {title, levels:[{text, t, sub?}], breakAt?, end?, endAt?, y?, gap?}
+export function chainCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .36, 1.1);
+    const a = eOut(lt / .3), gap = o.gap ?? 225, y0 = H * (o.y ?? .12), bw = W - 180, bh = 150;
+    if (o.title) label(ctx, o.title, W / 2, y0 - 20, 46, a, 'center', 800);
+    o.levels.forEach((L, i) => {
+      const k = (lt - L.t) / .35; if (k <= 0) return;
+      const y = y0 + 40 + i * gap, ke = eOut(k);
+      const bk = o.breakAt != null ? clamp((lt - o.breakAt - i * .22) / .5) : 0, bke = eIO(bk);
+      if (i > 0) { const prevOn = lt > o.levels[i - 1].t; if (prevOn) { const pts = []; for (let j = 0; j <= 20; j++) pts.push([W / 2, y - gap + bh + (gap - bh) * j / 20]); ctx.save(); ctx.globalAlpha = ke * (1 - bke); glowLine(ctx, pts, ke, 6); ctx.restore(); } }
+      ctx.save(); ctx.globalAlpha = ke * (1 - .55 * bke); ctx.translate(W / 2, y + bh / 2 + bke * 60); ctx.rotate(bke * (i % 2 ? .07 : -.07)); const s = .85 + .15 * eOut(k); ctx.scale(s, s);
+      ctx.fillStyle = bk > 0 ? `rgba(${40 + 60 * bke},14,10,.92)` : 'rgba(40,24,14,.92)'; ctx.strokeStyle = bk > 0 ? '#ff4a2a' : '#ffb347'; ctx.lineWidth = 5;
+      ctx.shadowColor = bk > 0 ? 'rgba(255,40,0,.8)' : '#ff6a00'; ctx.shadowBlur = 36 * (1 - .5 * bke); ctx.beginPath(); ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 30); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 66px "Inter Display"'; const fz = Math.min(66, 66 * (bw - 70) / ctx.measureText(L.text).width);
+      ctx.font = `800 ${Math.floor(fz)}px "Inter Display"`; ctx.fillStyle = bk > 0 ? 'rgba(255,220,210,.75)' : '#fffaf2'; ctx.fillText(L.text, 0, L.sub ? -16 : 3);
+      if (L.sub) { ctx.font = '600 34px Inter'; ctx.fillStyle = 'rgba(255,210,170,.8)'; ctx.fillText(L.sub, 0, 40); }
+      ctx.restore();
+    });
+    if (o.end && lt > o.endAt) { const k = (lt - o.endAt) / .3; const yl = y0 + 40 + o.levels.length * gap + 20; ctx.save(); ctx.translate(W / 2, Math.min(yl, H * .62)); ctx.rotate(-.05); pill(ctx, o.end, 0, 0, k * 1.5, true); ctx.restore(); }
+  };
+}
+// one big word with a small title above and a sub line below (both timed)
+export function wordCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .34, 1.1);
+    const a = eOut(lt / .3), cy = H * (o.y ?? .3);
+    if (o.title) label(ctx, o.title, W / 2, cy - 170, 48, a, 'center', 800);
+    const k = (lt - (o.at ?? .1)) / .3;
+    if (k > 0) { ctx.save(); ctx.translate(W / 2, cy); const s = .7 + .3 * eBk(clamp(k)); ctx.scale(s, s); ctx.font = `800 ${o.px ?? 150}px "Inter Display"`;
+      const fz = Math.min(o.px ?? 150, (o.px ?? 150) * (W - 140) / ctx.measureText(o.word).width); bigNum(ctx, o.word, 0, 0, fz, clamp(k * 2)); ctx.restore(); }
+    if (o.sub) label(ctx, o.sub, W / 2, cy + 150, 50, clamp((lt - (o.subAt ?? 1)) / .3), 'center', 700);
+    if (o.pill) { const k2 = (lt - o.pillAt) / .3; if (k2 > 0) pill(ctx, o.pill, W / 2, cy + 270, k2 * 1.3, true); }
   };
 }
