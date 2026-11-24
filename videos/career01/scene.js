@@ -10,11 +10,11 @@ export default async () => ({
     face(4.0417, 14.3, { in: { type: 'whip', dur: .35 } }),
     face(14.3, 37.5, { punch: [{ t: 25.24 - 14.3, s: 1.08 }, { t: 27.96 - 14.3, s: 1.1 }] }),
     { kind: '2d', t0: 37.5, t1: 46.4, in: { type: 'whip', dur: .4 }, draw: wordCard({ title: 'THEY TEST YOUR', word: 'APTITUDES', at: 38.68 - 37.5, px: 160, sub: 'what are you naturally good at?', subAt: 43.32 - 37.5, pill: 'NOT INTELLIGENCE', pillAt: 45.32 - 37.5 }) },
-    { kind: '2d', t0: 46.4, t1: 53.0, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'TWO PEOPLE', y: .14, gap: 170, check: false, items: [
-      { t: 47.86 - 46.4, text: 'PERSON A → MATH' }, { t: 48.9 - 46.4, text: 'PERSON B → WRITING' }] }) },
+    { kind: '2d', t0: 46.4, t1: 53.0, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'TWO PEOPLE', y: .19, gap: 210, check: false, items: [
+      { t: 47.86 - 46.4, text: 'PERSON A → MATH', px: 76 }, { t: 48.9 - 46.4, text: 'PERSON B → WRITING', px: 76 }] }) },
     face(53.0, 61.2),
-    { kind: '2d', t0: 61.2, t1: 76.4, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'HIS RESULTS', y: .13, gap: 190, tag: 'WORST JOB: CORPORATE LAWYER', tagBelow: true, items: [
-      { t: 61.96 - 61.2, text: 'LOTS OF IDEAS' }, { t: 66.74 - 61.2, text: 'NOT DETAIL-ORIENTED', tagAt: 71.24 - 61.2 }] }) },
+    { kind: '2d', t0: 61.2, t1: 76.4, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'HIS RESULTS', y: .19, gap: 210, tag: 'WORST JOB: CORPORATE LAWYER', tagBelow: true, items: [
+      { t: 61.96 - 61.2, text: 'LOTS OF IDEAS', px: 76 }, { t: 66.74 - 61.2, text: 'NOT DETAIL-ORIENTED', px: 68, tagAt: 71.24 - 61.2 }] }) },
     face(76.4, 94.583, { punch: [{ t: 89.98 - 76.4, s: 1.1 }] }),
   ],
   lockups: [
