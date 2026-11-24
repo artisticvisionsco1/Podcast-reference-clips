@@ -16,11 +16,13 @@ export default async () => ({
     face(32.2, 36.2),
     { kind: '2d', t0: 36.2, t1: 43.0, in: { type: 'whip', dur: .4 }, draw: (c, lt, e) => thesis(c, lt + 36.2 - T, e) },
     face(43.0, 48.6, { in: { type: 'whip', dur: .35 } }),
-    { kind: '2d', t0: 48.6, t1: 69.0, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'IF CRYPTO WERE A HEDGE', y: .13, gap: 190, check: false, items: [
-      { t: 57.32 - 48.6, text: 'BAD DAY → CRYPTO UP', px: 56, sub: 'inflation up, NASDAQ down' }, { t: 67.14 - 48.6, text: 'GOOD DAY → CRYPTO DOWN', px: 56, sub: 'Nvidia up 6%, NASDAQ up 2%' }] }) },
-    { kind: '2d', t0: 69.0, t1: 81.8, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'WHAT ACTUALLY HAPPENS', y: .13, gap: 190, check: false, tag: 'THE OPPOSITE', tagBelow: true, items: [
-      { t: 74.4 - 69.0, text: 'NVIDIA UP → CRYPTO UP', px: 54 }, { t: 80.26 - 69.0, text: 'NVIDIA DOWN → CRYPTO DOWN', px: 52, tagAt: 80.8 - 69.0 }] }) },
-    { kind: '2d', t0: 81.8, t1: 91.6, in: { type: 'whip', dur: .4 }, draw: wordCard({ title: 'SO YOUR THESIS IS', word: 'NONSENSE', at: 89.48 - 81.8, px: 170, sub: 'it acts inversely to itself', subAt: 85.86 - 81.8, pill: 'SPECULATING ON SPECULATING', pillAt: 92.8 - 81.8 }) },
+    { kind: '2d', t0: 48.6, t1: 69.0, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'IF CRYPTO WERE A HEDGE', y: .19, gap: 200, check: false, items: [
+      { t: 50.3 - 48.6, text: 'BAD DAY', px: 76, sub: 'inflation up, NASDAQ down' }, { t: 57.3 - 48.6, text: '→ CRYPTO UP', px: 76 },
+      { t: 59.6 - 48.6, text: 'GOOD DAY', px: 76, sub: 'Nvidia up 6%, NASDAQ up 2%' }, { t: 67.1 - 48.6, text: '→ CRYPTO DOWN', px: 76 }] }) },
+    { kind: '2d', t0: 69.0, t1: 81.8, in: { type: 'whip', dur: .4 }, draw: listCard({ title: 'WHAT ACTUALLY HAPPENS', y: .19, gap: 200, check: false, tag: 'THE OPPOSITE', tagBelow: true, items: [
+      { t: 73.2 - 69.0, text: 'NVIDIA UP', px: 76 }, { t: 74.4 - 69.0, text: '→ CRYPTO UP', px: 76 },
+      { t: 76.8 - 69.0, text: 'NVIDIA DOWN', px: 76 }, { t: 80.3 - 69.0, text: '→ CRYPTO DOWN', px: 76, tagAt: 80.8 - 69.0 }] }) },
+    { kind: '2d', t0: 81.8, t1: 91.6, in: { type: 'whip', dur: .4 }, draw: wordCard({ title: 'SO YOUR THESIS IS', word: 'NONSENSE', at: 89.48 - 81.8, px: 170, sub: 'the asset does the opposite of the thesis', subAt: 83.3 - 81.8, y: .3 }) },
     face(91.6, 98.792, { punch: [{ t: 98.2 - 91.6, s: 1.1 }] }),
   ],
   lockups: [
