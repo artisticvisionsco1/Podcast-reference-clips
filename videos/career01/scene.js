@@ -25,7 +25,7 @@ export default async () => ({
     { t0: 14.35, t1: 19.4, lines: [[{ w: "I'll tell you a little story", k: 's', at: 14.84 }], [{ w: 'about me', k: 's', at: 15.9 }]] },
     { t0: 19.45, t1: 24.3, lines: [[{ w: 'I went to law school', k: 's', at: 19.58 }], [{ w: 'corporate lawyer', k: 'bo', at: 23.66 }]] },
     { t0: 24.35, t1: 29.0, lines: [[{ w: 'utterly miserable', k: 'sc', at: 24.88 }], [{ w: 'terrible at it', k: 's', at: 27.72 }]] },
-    { t0: 29.05, t1: 37.5, lines: [[{ w: 'a full day examination', k: 's', at: 32.46 }], [{ w: 'Johnson O\'Connor Institute', k: 'sc', at: 35.24 }]] },
+    { t0: 29.05, t1: 37.5, lines: [[{ w: 'a full day examination', k: 's', at: 32.46 }], [{ w: 'Johnson O\'Connor', k: 'sc', at: 35.24 }], [{ w: 'Institute', k: 's', at: 35.9 }]] },
     { t0: 53.05, t1: 57.0, lines: [[{ w: 'a whole battery of tests', k: 's', at: 53.48 }]] },
     { t0: 57.05, t1: 61.2, lines: [[{ w: 'at the end of it', k: 's', at: 57.24 }], [{ w: 'they said…', k: 'sc', at: 58.04 }]] },
     { t0: 72.0, t1: 76.4, y: .76, lines: [[{ w: 'now I understood', k: 's', at: 73.84 }], [{ w: 'why I was miserable', k: 'sc', at: 74.6 }]] },
