@@ -234,7 +234,7 @@ export function listCard(o) {
       ctx.font = `800 ${it.px ?? 64}px "Inter Display"`; ctx.fillStyle = '#fffaf2'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; ctx.fillText(it.text, x0 + 90, y);
       if (it.sub) { ctx.font = `600 ${Math.round((it.px ?? 64) * .5)}px Inter`; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + (it.px ?? 64) * .72); }
       ctx.restore();
-      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.35 : P * 1.25)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
+      if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.75 : P * 1.25)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
     });
   };
 }
