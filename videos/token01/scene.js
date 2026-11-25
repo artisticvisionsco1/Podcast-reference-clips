@@ -25,7 +25,7 @@ export default async () => ({
     { t0: 2.9, t1: 4.85, lines: [[{ w: 'all day', k: 'sc', at: 2.9 }], [{ w: 'and all night', k: 's', at: 3.92 }]] },
     { t0: 4.88, t1: 6.28, lines: [[{ w: "I don't care what the costs are", k: 's', at: 4.88 }]] },
     { t0: 6.3, t1: 8.0, lines: [[{ w: 'use it, use it, use it', k: 'bo', at: 6.6 }]] },
-    { t0: 8.05, t1: 14.4, lines: [[{ w: 'they benefited enormously', k: 's', at: 8.16 }], [{ w: 'from', k: 's', at: 10.56 }], [{ w: 'token maxing', k: 'sc', at: 12.88 }]] },
+    { t0: 8.05, t1: 14.4, lines: [[{ w: 'they benefited enormously from', k: 's', at: 8.16 }], [{ w: 'token maxing', k: 'sc', at: 12.88 }]] },
     { t0: 19.95, t1: 25.9, lines: [[{ w: 'a simple search', k: 's', at: 20.92 }], [{ w: 'on AI', k: 'bo', at: 23.18 }]] },
     { t0: 25.95, t1: 28.8, lines: [[{ w: 'why did the', k: 's', at: 26.04 }], [{ w: 'Roman Empire', k: 'sc', at: 26.98 }], [{ w: 'fail?', k: 's', at: 27.46 }]] },
     { t0: 31.5, t1: 37.0, lines: [[{ w: 'that search is done in', k: 's', at: 34.38 }], [{ w: 'tokens', k: 'bo', at: 36.0 }]] },
