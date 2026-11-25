@@ -399,3 +399,26 @@ export function wordCard(o) {
     if (o.pill) { const k2 = (lt - o.pillAt) / .3; if (k2 > 0) pill(ctx, o.pill, W / 2, cy + 270, k2 * 1.3, true); }
   };
 }
+// flat-then-vertical line chart (e.g. world GDP per person, year 0 → today). The line draws flat until o.flatEnd, then
+// shoots up from o.spikeAt over o.spikeDur. o = {title, sub?, at, flatEnd, spikeAt, spikeDur?, x0Label, kneeLabel, endLabel, knee (0..1), pill?, pillAt?}
+export function hockeyCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .4, 1.1);
+    const a = eOut(lt / .3), L = 120, R = W - 110, T = H * .17, B = H * .5, knee = o.knee ?? .82;
+    if (o.title) label(ctx, o.title, W / 2, T - 70, 50, a, 'center', 800);
+    if (o.sub) label(ctx, o.sub, W / 2, T - 18, 34, a * .8, 'center', 600);
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,220,190,.35)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(L, T + 20); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke(); ctx.restore();
+    const p1 = clamp((lt - o.at) / (o.flatEnd - o.at)), p2 = clamp((lt - o.spikeAt) / (o.spikeDur ?? 1.4));
+    const p = p1 * knee + eIO(p2) * (1 - knee);
+    const f = x => x <= knee ? .025 + .015 * x / knee : .04 + .96 * Math.pow((x - knee) / (1 - knee), 2.2);
+    const X = x => L + (R - L) * x, Y = v => B - (B - T - 40) * v;
+    if (p > 0) { ctx.save(); ctx.beginPath(); for (let i = 0; i <= 200; i++) { const x = p * i / 200; i ? ctx.lineTo(X(x), Y(f(x))) : ctx.moveTo(X(x), Y(f(x))); }
+      ctx.strokeStyle = orangeGrad(ctx, T, B); ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40; ctx.stroke();
+      ctx.beginPath(); ctx.arc(X(p), Y(f(p)), 14, 0, 7); ctx.fillStyle = '#fff3e0'; ctx.fill(); ctx.restore(); }
+    label(ctx, o.x0Label ?? 'YEAR 0', L, B + 60, 38, a, 'left', 800);
+    label(ctx, o.kneeLabel ?? '1830', X(knee), B + 60, 38, clamp((lt - o.flatEnd + .4) / .3), 'center', 800);
+    label(ctx, o.endLabel ?? '2022', R - 34, T + 40, 38, clamp((lt - o.spikeAt - .6) / .3), 'right', 800);
+    if (o.pill) { const k2 = (lt - o.pillAt) / .3; if (k2 > 0) pill(ctx, o.pill, W / 2, B + 150, k2 * 1.3, true); }
+  };
+}
