@@ -1,0 +1,4 @@
+# sources/podcast04.mp4 (DOAC, Ryan Montgomery "0day"). hook teaser, then continuous
+2644.90 2651.70  HOOK: they communicate with China, almost all of them, they're built in China
+2632.15 2730.18  internet facing devices in your home: don't trust any of them ... China cloud ... malicious firmware ... VLAN
+2745.95 2747.30  and that's what I do in my house personally

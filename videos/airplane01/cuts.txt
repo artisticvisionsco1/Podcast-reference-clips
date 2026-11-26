@@ -1,0 +1,3 @@
+# sources/podcast04.mp4 (DOAC, Ryan Montgomery "0day"). hook teaser, then continuous
+2244.15 2249.55  HOOK: Apple doesn't disable your Bluetooth by putting it in airplane mode
+2181.62 2278.05  put it in airplane mode ... pop-ups ... everyone in your studio ... turn Bluetooth off from settings ... that will stop
