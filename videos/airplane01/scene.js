@@ -31,7 +31,7 @@ export default async () => ({
     { t0: 29.55, t1: 31.9, lines: [[{ w: 'everyone in', k: 's', at: 29.56 }], [{ w: 'your studio', k: 'sc', at: 30.08 }]] },
     { t0: 31.95, t1: 37.6, lines: [[{ w: "phone's in airplane mode", k: 's', at: 31.94 }], [{ w: 'on, off', k: 'bo', at: 33.8 }]] },
     { t0: 37.65, t1: 44.6, lines: [[{ w: 'makes your phone', k: 's', at: 42.84 }], [{ w: 'essentially unusable', k: 'sc', at: 43.46 }]] },
-    { t0: 44.65, t1: 49.9, lines: [[{ w: 'I could be walking by', k: 's', at: 44.74 }], [{ w: "so you can't use your device", k: 'bo', at: 48.06 }]] },
+    { t0: 44.65, t1: 49.9, lines: [[{ w: 'I could be walking by', k: 's', at: 44.74 }], [{ w: "so you're unable", k: 's', at: 48.06 }], [{ w: 'to use your device', k: 'bo', at: 48.78 }]] },
     { t0: 86.55, t1: 89.6, lines: [[{ w: 'a harmless attack', k: 's', at: 87.24 }], [{ w: 'an annoying attack', k: 'bo', at: 88.26 }]] },
     { t0: 89.65, t1: 97.8, lines: [[{ w: "you're getting spammed", k: 's', at: 94.56 }], [{ w: "you can't do anything", k: 'sc', at: 96.54 }]] },
     { t0: 97.85, t1: 106, keep: true, lines: [[{ w: 'just disable', k: 's', at: 99.86 }], [{ w: 'your Bluetooth', k: 'bo', at: 100.38 }]] },
