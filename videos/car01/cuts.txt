@@ -1,0 +1,4 @@
+# sources/podcast04.mp4 (DOAC, Ryan Montgomery "0day"). hook teaser, then the story (attack how-to part removed)
+3234.30 3241.20  HOOK: the fact that it exists in your car gives an attacker full control
+3190.95 3265.20  KARR car alarm: dealer-installed ... master key in the app ... 2.2 million cars
+3286.45 3318.80  the only patch: check the app / windshield logo, update the firmware ... most people don't know

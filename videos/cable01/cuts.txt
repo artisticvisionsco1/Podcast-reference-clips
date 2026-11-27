@@ -1,0 +1,4 @@
+# sources/podcast04.mp4 (DOAC, Ryan Montgomery "0day"). hook teaser, then two body parts (dead air before the demo removed)
+3947.70 3953.30  HOOK: completely remove itself ... behaves like a normal charger ... you'd never know it existed
+3881.05 3988.70  is this a normal iPhone cable? ... 300 characters per second ... export contacts ... mini computer ... om.g network
+4000.60 4013.05  the demo types "Zero Day was here" ... you can essentially hack the phone

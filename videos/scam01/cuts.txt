@@ -1,0 +1,3 @@
+# sources/podcast04.mp4 (DOAC, Ryan Montgomery "0day"). hook teaser, then continuous
+6181.90 6187.95  HOOK: spent a thousand pounds on a gift card ... sent it to someone who they thought was me
+6137.85 6229.80  gift-card phishing, deepfake voice notes, 200k euros lost ... check the domain ... screenshot it, ask an AI
