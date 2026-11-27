@@ -232,7 +232,7 @@ export function listCard(o) {
       if (o.check !== false) { ctx.save(); ctx.translate(x0 + 30, y - 18); ctx.scale(eBk(k), eBk(k)); ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.fillStyle = orangeGrad(ctx, -30, 30); ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 30; ctx.fill();
         ctx.shadowBlur = 0; ctx.strokeStyle = '#2a1204'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-13, 0); ctx.lineTo(-3, 10); ctx.lineTo(14, -10); ctx.stroke(); ctx.restore(); }
       ctx.font = `800 ${it.px ?? 64}px "Inter Display"`; ctx.fillStyle = '#fffaf2'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; ctx.fillText(it.text, x0 + 90, y);
-      if (it.sub) { ctx.font = `600 ${Math.round((it.px ?? 64) * .5)}px Inter`; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + (it.px ?? 64) * .72); }
+      if (it.sub) { ctx.font = `600 ${Math.max(34, Math.round((it.px ?? 64) * .5))}px Inter`; ctx.fillStyle = 'rgba(255,220,180,.8)'; ctx.fillText(it.sub, x0 + 90, y + (it.px ?? 64) * .72); }
       ctx.restore();
       if (o.tag && it.tagAt != null) { const tk = (lt - it.tagAt) / .3; if (tk > 0) { const P = it.px ?? 64; ctx.save(); if (o.tagBelow) ctx.translate(x0 + 90 + 210, y + (it.sub ? P * 1.75 : P * 1.25)); else ctx.translate(W - 210, y - 18); ctx.rotate(-.06); pill(ctx, o.tag, 0, 0, tk, true); ctx.restore(); } }
     });
@@ -325,9 +325,9 @@ export function chatCard(o) {
     ctx.shadowBlur = 0; ctx.lineWidth = 6; ctx.strokeStyle = '#ffb347'; ctx.stroke();
     ctx.fillStyle = 'rgba(255,200,150,.12)'; ctx.fillRect(px + 6, py + 120, pw - 12, 2);
     ctx.beginPath(); ctx.arc(px + 90, py + 64, 34, 0, 7); ctx.fillStyle = orangeGrad(ctx, py + 30, py + 98); ctx.fill();
-    ctx.font = '800 30px "Inter Display"'; ctx.fillStyle = '#2a1204'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('AI', px + 90, py + 66);
+    ctx.font = '800 30px "Inter Display"'; ctx.fillStyle = '#2a1204'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(o.avatar ?? 'AI', px + 90, py + 66);
     ctx.textAlign = 'left'; ctx.font = '700 38px Inter'; ctx.fillStyle = '#f6e6d2'; ctx.fillText(o.name ?? 'AI Companion', px + 145, py + 52);
-    ctx.font = '500 26px Inter'; ctx.fillStyle = 'rgba(255,200,150,.7)'; ctx.fillText('online', px + 145, py + 88);
+    ctx.font = '500 26px Inter'; ctx.fillStyle = 'rgba(255,200,150,.7)'; ctx.fillText(o.status ?? 'online', px + 145, py + 88);
     let y = py + 170;
     const wrap = (txt, maxw) => { ctx.font = '600 40px Inter'; const words = txt.split(' '), lines = []; let cur = ''; for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxw && cur) { lines.push(cur); cur = w; } else cur = t; } if (cur) lines.push(cur); return lines; };
     for (const m of o.msgs) {
@@ -464,19 +464,19 @@ export function typeCard(o) {
   return (ctx, lt, { W, H, warmBg }) => {
     warmBg(ctx, .5, .4, 1.1);
     const a = eOut(lt / .3); if (o.title) label(ctx, o.title, W / 2, H * .12, 48, a, 'center', 800);
-    const pw = 560, ph = 860, px = W / 2 - pw / 2, py = H * .17;
+    const pw = 560, ph = o.ph ?? 700, px = W / 2 - pw / 2, py = H * .17, ML = Math.floor((ph - 210) / 50);
     ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(20,12,6,.95)'; ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 5; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40;
     ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 60); ctx.fill(); ctx.stroke(); ctx.restore();
     const n = Math.max(0, Math.floor((lt - o.at) * (o.cps ?? 300))), txt = o.text.slice(0, n);
     ctx.save(); ctx.beginPath(); ctx.rect(px + 30, py + 90, pw - 60, ph - 150); ctx.clip(); ctx.font = '600 40px Inter'; ctx.fillStyle = '#fffaf2';
     const words = txt.split(' '); let line = '', y = py + 150; const lines = [];
     for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > pw - 90) { lines.push(line); line = w; } else line = t; } lines.push(line);
-    const top = Math.max(0, lines.length - 15); lines.slice(top).forEach((l, i) => ctx.fillText(l, px + 45, y + i * 50));
-    if (lt > o.at && Math.floor(lt * 3) % 2 === 0) { const lw = ctx.measureText(lines[lines.length - 1]).width; ctx.fillStyle = '#ffb347'; ctx.fillRect(px + 48 + lw, y + (Math.min(lines.length, 15) - 1) * 50 - 34, 4, 42); }
+    const top = Math.max(0, lines.length - ML); lines.slice(top).forEach((l, i) => ctx.fillText(l, px + 45, y + i * 50));
+    if (lt > o.at && Math.floor(lt * 3) % 2 === 0) { const lw = ctx.measureText(lines[lines.length - 1]).width; ctx.fillStyle = '#ffb347'; ctx.fillRect(px + 48 + lw, y + (Math.min(lines.length, ML) - 1) * 50 - 34, 4, 42); }
     ctx.restore();
-    if (o.counter && lt > o.at) { const k = clamp((lt - o.at) / .6); ctx.save(); ctx.translate(W / 2, py + ph + 120); ctx.scale(.8 + .2 * eOut(k), .8 + .2 * eOut(k));
+    if (o.counter && lt > o.at) { const k = clamp((lt - o.at) / .6); ctx.save(); ctx.translate(W / 2, py + ph + 190); ctx.scale(.8 + .2 * eOut(k), .8 + .2 * eOut(k));
       bigNum(ctx, String(Math.round((o.cps ?? 300) * eOut(clamp((lt - o.at) / 1.2)))), 0, 0, 150, k); ctx.restore();
-      label(ctx, o.counter, W / 2, py + ph + 200, 44, k, 'center', 800); }
+      label(ctx, o.counter, W / 2, py + ph + 270, 44, k, 'center', 800); }
   };
 }
 // an abstract city map: a phone dot moves around, leaves pings, the pings sell as dots to a broker; then hotspots glow
@@ -498,7 +498,7 @@ export function mapCard(o) {
       for (let j = 0; j < Math.min(60, Math.floor(tm * 8)); j++) { const u = ((j / 8) / (o.loop ?? 4.5)) % 1, [x, y] = pos(u); ctx.save(); ctx.globalAlpha = .55 * a; ctx.fillStyle = '#ffb238'; ctx.beginPath(); ctx.arc(x + Math.sin(j * 7) * 8, y + Math.cos(j * 5) * 8, 7, 0, 7); ctx.fill(); ctx.restore(); }
       const [x, y] = pos(loops % 1); dot(ctx, x, y, 20);
     }
-    o.hot.forEach((h, i) => { const k = (lt - o.hotAt - i * .5) / .4; if (k <= 0) return; const x = mx + mw * h.x, y = my + mh * h.y;
+    o.hot.forEach((h, i) => { const k = (lt - (h.at ?? o.hotAt + i * .5)) / .4; if (k <= 0) return; const x = mx + mw * h.x, y = my + mh * h.y;
       ctx.save(); const g = ctx.createRadialGradient(x, y, 0, x, y, 130 * eOut(k)); g.addColorStop(0, 'rgba(255,120,20,.65)'); g.addColorStop(1, 'rgba(255,90,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 130, 0, 7); ctx.fill(); ctx.restore();
       ctx.save(); ctx.translate(x, y - 70); ctx.rotate(-.04); pill(ctx, h.label, 0, 0, k * 1.3, true); ctx.restore(); });
     if (o.broker && lt > o.brokerAt) { const k = clamp((lt - o.brokerAt) / .35); ctx.save(); ctx.translate(W / 2, my + mh + 110); ctx.rotate(-.03); pill(ctx, o.broker, 0, 0, k * 1.3, true); ctx.restore(); }
