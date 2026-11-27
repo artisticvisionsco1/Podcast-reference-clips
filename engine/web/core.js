@@ -148,6 +148,24 @@ function frames2d(ctx, lt, f) {
 }
 
 // ---------- 2D backgrounds ----------
+const pushIn = (c, lt) => { const s = 1 + Math.min(.05, lt * .006); c.translate(W / 2, H * .36); c.scale(s, s); c.translate(-W / 2, -H * .36); };
+// slow warm dust + two thin rotating outline squares (from the reference's card backgrounds)
+function ambient(c, lt, seed) {
+  let sd = 7 + Math.floor(seed * 13) % 97; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  c.save();
+  for (let i = 0; i < 38; i++) {
+    const x0 = rnd() * W, y0 = rnd() * H, sp = 14 + rnd() * 26, r = 1.5 + rnd() * 3.5, ph = rnd() * 6.28;
+    const y = ((y0 - lt * sp) % H + H) % H, x = x0 + Math.sin(lt * .4 + ph) * 18;
+    c.globalAlpha = (.18 + .22 * Math.sin(lt * .9 + ph) ** 2) * Math.min(1, lt / .5);
+    c.fillStyle = '#ffc787'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  }
+  c.globalAlpha = .09 * Math.min(1, lt / .6); c.strokeStyle = '#ffb347'; c.lineWidth = 3;
+  for (const [cx, cy, sz, dir] of [[W * .86, H * .8, 260, 1], [W * .12, H * .9, 180, -1]]) {
+    c.save(); c.translate(cx, cy - lt * 6); c.rotate(dir * (lt * .18 + .5)); c.strokeRect(-sz / 2, -sz / 2, sz, sz);
+    c.rotate(.4); c.strokeRect(-sz * .32, -sz * .32, sz * .64, sz * .64); c.restore();
+  }
+  c.restore();
+}
 export function warmBg(ctx, cx = .5, cy = .45, r = 1.0, a = 1) {
   const g = ctx.createRadialGradient(W * cx, H * cy, 0, W * cx, H * cy, H * .75 * r);
   g.addColorStop(0, `rgba(70,42,12,${a})`); g.addColorStop(.55, `rgba(30,18,6,${a})`); g.addColorStop(1, `rgba(8,5,2,${a})`);
@@ -171,7 +189,15 @@ async function drawShot(ctx, shot, t) {
   ctx.save(); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   if (shot.kind === 'face') await renderFace(V, shot, lt, ctx);
   else if (shot.kind === '3d') render3d(shot, lt, ctx);
-  else if (shot.kind === '2d') shot.draw(ctx, lt, { W, H, C, ease, prog, clamp, lerp, warmBg });
+  else if (shot.kind === '2d') {
+    // cardFx (opt-in per scene): ambient motion behind the card + a slow push-in, so a card never sits still
+    if (SC.cardFx) {
+      const bg = (c, ...a) => { warmBg(c, ...a); c.restore(); ambient(c, lt, shot.t0); c.save(); pushIn(c, lt); };
+      ctx.save(); pushIn(ctx, lt);
+      shot.draw(ctx, lt, { W, H, C, ease, prog, clamp, lerp, warmBg: bg });
+      ctx.restore();
+    } else shot.draw(ctx, lt, { W, H, C, ease, prog, clamp, lerp, warmBg });
+  }
   else if (shot.kind === 'stack') await renderStack(ctx, shot, lt);
   else if (shot.kind === 'clip') await renderClip(ctx, shot, lt);
   if (shot.frames) frames2d(ctx, lt, shot.frames);

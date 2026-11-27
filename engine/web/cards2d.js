@@ -422,3 +422,85 @@ export function hockeyCard(o) {
     if (o.pill) { const k2 = (lt - o.pillAt) / .3; if (k2 > 0) pill(ctx, o.pill, W / 2, B + 150, k2 * 1.3, true); }
   };
 }
+
+// ---------- line icons (glowing outline props that draw on, then float) ----------
+// Each icon is drawn in a 200x200 box centred on 0,0. k = draw-on progress (0..1).
+const ICONS = {
+  phone: c => { c.roundRect(-55, -95, 110, 190, 22); c.moveTo(-18, -78); c.lineTo(18, -78); c.moveTo(-8, 76); c.lineTo(8, 76); },
+  cable: c => { c.roundRect(-30, -95, 60, 70, 10); c.moveTo(-12, -95); c.lineTo(-12, -115); c.moveTo(12, -95); c.lineTo(12, -115);
+    c.moveTo(0, -25); c.bezierCurveTo(0, 30, -70, 20, -60, 70); c.bezierCurveTo(-52, 105, 40, 110, 60, 70); },
+  car: c => { c.moveTo(-95, 30); c.lineTo(-95, -5); c.lineTo(-60, -15); c.lineTo(-35, -55); c.lineTo(40, -55); c.lineTo(68, -15); c.lineTo(95, -5); c.lineTo(95, 30); c.lineTo(-95, 30);
+    c.moveTo(-50, 30); c.arc(-50, 30, 20, 0, Math.PI * 2); c.moveTo(70, 30); c.arc(50, 30, 20, 0, Math.PI * 2); c.moveTo(-28, -15); c.lineTo(58, -15); },
+  gift: c => { c.rect(-80, -20, 160, 110); c.rect(-90, -50, 180, 30); c.moveTo(0, -50); c.lineTo(0, 90);
+    c.moveTo(0, -50); c.bezierCurveTo(-30, -100, -75, -75, -40, -50); c.moveTo(0, -50); c.bezierCurveTo(30, -100, 75, -75, 40, -50); },
+  pin: c => { c.moveTo(0, 95); c.bezierCurveTo(-30, 40, -70, 0, -70, -35); c.arc(0, -35, 70, Math.PI, 0); c.bezierCurveTo(70, 0, 30, 40, 0, 95); c.moveTo(25, -35); c.arc(0, -35, 25, 0, Math.PI * 2); },
+  shield: c => { c.moveTo(0, -95); c.lineTo(75, -65); c.lineTo(70, 10); c.bezierCurveTo(60, 55, 25, 80, 0, 95); c.bezierCurveTo(-25, 80, -60, 55, -70, 10); c.lineTo(-75, -65); c.lineTo(0, -95);
+    c.moveTo(-30, 0); c.lineTo(-8, 24); c.lineTo(34, -24); },
+  eye: c => { c.moveTo(-95, 0); c.bezierCurveTo(-50, -60, 50, -60, 95, 0); c.bezierCurveTo(50, 60, -50, 60, -95, 0); c.moveTo(30, 0); c.arc(0, 0, 30, 0, Math.PI * 2); },
+  lock: c => { c.roundRect(-65, -15, 130, 105, 14); c.moveTo(-40, -15); c.lineTo(-40, -50); c.arc(0, -50, 40, Math.PI, 0); c.lineTo(40, -15); c.moveTo(0, 25); c.lineTo(0, 50); },
+  chat: c => { c.roundRect(-90, -70, 180, 115, 26); c.moveTo(-40, 45); c.lineTo(-55, 85); c.lineTo(-5, 45); c.moveTo(-50, -25); c.lineTo(50, -25); c.moveTo(-50, 5); c.lineTo(20, 5); },
+  key: c => { c.moveTo(-30, 0); c.arc(-55, 0, 25, 0, Math.PI * 2); c.moveTo(-30, 0); c.lineTo(90, 0); c.lineTo(90, 25); c.moveTo(60, 0); c.lineTo(60, 22); },
+  ai: c => { c.roundRect(-75, -60, 150, 120, 30); c.moveTo(-28, -5); c.arc(-35, -5, 7, 0, 7); c.moveTo(42, -5); c.arc(35, -5, 7, 0, 7); c.moveTo(-25, 30); c.lineTo(25, 30); c.moveTo(0, -60); c.lineTo(0, -90); c.moveTo(8, -95); c.arc(0, -95, 8, 0, 7); },
+};
+export function lineIcon(ctx, name, x, y, s, k, a = 1) {
+  if (k <= 0) return; const L = 1400;
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = a; ctx.lineJoin = ctx.lineCap = 'round';
+  ctx.beginPath(); ICONS[name](ctx); ctx.setLineDash([L * eOut(k), L]);
+  ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 46 / s; ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 9 / s * 1.4; ctx.stroke();
+  ctx.shadowBlur = 0; ctx.strokeStyle = '#fff3d6'; ctx.lineWidth = 3.2 / s * 1.4; ctx.stroke(); ctx.restore();
+}
+// wrap any card with a big floating icon in its empty lower area. ic = {n, at, y (0..1 of H), s, x?}
+export function iconed(draw, ic) {
+  return (ctx, lt, env) => {
+    draw(ctx, lt, env);
+    const list = Array.isArray(ic) ? ic : [ic];
+    for (const i of list) { const k = (lt - (i.at ?? .2)) / (i.dur ?? .9); if (k <= 0) continue;
+      const fl = Math.sin(lt * 1.3 + (i.x ?? .5) * 5) * 10, sc = (i.s ?? 2.2) * (.85 + .15 * eOut(k * 1.5));
+      lineIcon(ctx, i.n, env.W * (i.x ?? .5), env.H * (i.y ?? .66) + fl, sc, k, clamp(k * 3) * (i.a ?? .95)); }
+  };
+}
+// a phone screen where text types at a given speed, with a live chars/sec counter (e.g. the OMG cable demo)
+export function typeCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .4, 1.1);
+    const a = eOut(lt / .3); if (o.title) label(ctx, o.title, W / 2, H * .12, 48, a, 'center', 800);
+    const pw = 560, ph = 860, px = W / 2 - pw / 2, py = H * .17;
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(20,12,6,.95)'; ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 5; ctx.shadowColor = '#ff6a00'; ctx.shadowBlur = 40;
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 60); ctx.fill(); ctx.stroke(); ctx.restore();
+    const n = Math.max(0, Math.floor((lt - o.at) * (o.cps ?? 300))), txt = o.text.slice(0, n);
+    ctx.save(); ctx.beginPath(); ctx.rect(px + 30, py + 90, pw - 60, ph - 150); ctx.clip(); ctx.font = '600 40px Inter'; ctx.fillStyle = '#fffaf2';
+    const words = txt.split(' '); let line = '', y = py + 150; const lines = [];
+    for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > pw - 90) { lines.push(line); line = w; } else line = t; } lines.push(line);
+    const top = Math.max(0, lines.length - 15); lines.slice(top).forEach((l, i) => ctx.fillText(l, px + 45, y + i * 50));
+    if (lt > o.at && Math.floor(lt * 3) % 2 === 0) { const lw = ctx.measureText(lines[lines.length - 1]).width; ctx.fillStyle = '#ffb347'; ctx.fillRect(px + 48 + lw, y + (Math.min(lines.length, 15) - 1) * 50 - 34, 4, 42); }
+    ctx.restore();
+    if (o.counter && lt > o.at) { const k = clamp((lt - o.at) / .6); ctx.save(); ctx.translate(W / 2, py + ph + 120); ctx.scale(.8 + .2 * eOut(k), .8 + .2 * eOut(k));
+      bigNum(ctx, String(Math.round((o.cps ?? 300) * eOut(clamp((lt - o.at) / 1.2)))), 0, 0, 150, k); ctx.restore();
+      label(ctx, o.counter, W / 2, py + ph + 200, 44, k, 'center', 800); }
+  };
+}
+// an abstract city map: a phone dot moves around, leaves pings, the pings sell as dots to a broker; then hotspots glow
+// o = {title, at, hotAt, hot:[{x,y,label}], brokerAt?, broker?}
+export function mapCard(o) {
+  return (ctx, lt, { W, H, warmBg }) => {
+    warmBg(ctx, .5, .42, 1.1);
+    const a = eOut(lt / .3); if (o.title) label(ctx, o.title, W / 2, H * .12, 48, a, 'center', 800);
+    const mx = 90, my = H * .16, mw = W - 180, mh = 900;
+    ctx.save(); ctx.globalAlpha = a * .9; ctx.strokeStyle = 'rgba(255,200,150,.16)'; ctx.lineWidth = 3;
+    let sd = 5; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 9; i++) { const y = my + mh * (i + .5) / 9 + (rnd() - .5) * 30; ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + mw, y + (rnd() - .5) * 60); ctx.stroke(); }
+    for (let i = 0; i < 7; i++) { const x = mx + mw * (i + .5) / 7 + (rnd() - .5) * 30; ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x + (rnd() - .5) * 60, my + mh); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(255,180,90,.35)'; ctx.lineWidth = 4; ctx.strokeRect(mx, my, mw, mh); ctx.restore();
+    const path = o.hot.map(h => [mx + mw * h.x, my + mh * h.y]); path.push(path[0]);
+    const pos = u => { const seg = u * (path.length - 1), i = Math.min(path.length - 2, Math.floor(seg)), f = seg - i; return [path[i][0] + (path[i + 1][0] - path[i][0]) * f, path[i][1] + (path[i + 1][1] - path[i][1]) * f]; };
+    const tm = lt - o.at; if (tm > 0) {
+      const loops = tm / (o.loop ?? 4.5);
+      for (let j = 0; j < Math.min(60, Math.floor(tm * 8)); j++) { const u = ((j / 8) / (o.loop ?? 4.5)) % 1, [x, y] = pos(u); ctx.save(); ctx.globalAlpha = .55 * a; ctx.fillStyle = '#ffb238'; ctx.beginPath(); ctx.arc(x + Math.sin(j * 7) * 8, y + Math.cos(j * 5) * 8, 7, 0, 7); ctx.fill(); ctx.restore(); }
+      const [x, y] = pos(loops % 1); dot(ctx, x, y, 20);
+    }
+    o.hot.forEach((h, i) => { const k = (lt - o.hotAt - i * .5) / .4; if (k <= 0) return; const x = mx + mw * h.x, y = my + mh * h.y;
+      ctx.save(); const g = ctx.createRadialGradient(x, y, 0, x, y, 130 * eOut(k)); g.addColorStop(0, 'rgba(255,120,20,.65)'); g.addColorStop(1, 'rgba(255,90,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 130, 0, 7); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.translate(x, y - 70); ctx.rotate(-.04); pill(ctx, h.label, 0, 0, k * 1.3, true); ctx.restore(); });
+    if (o.broker && lt > o.brokerAt) { const k = clamp((lt - o.brokerAt) / .35); ctx.save(); ctx.translate(W / 2, my + mh + 110); ctx.rotate(-.03); pill(ctx, o.broker, 0, 0, k * 1.3, true); ctx.restore(); }
+  };
+}
